@@ -17,11 +17,22 @@ All colors MUST be HSL.
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 340 82% 52%;
+    --primary-foreground: 0 0% 98%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 280 100% 70%;
+    --secondary-foreground: 0 0% 98%;
+
+    /* Love-themed gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(340 82% 52%), hsl(320 100% 65%));
+    --gradient-secondary: linear-gradient(135deg, hsl(280 100% 70%), hsl(260 100% 75%));
+    --gradient-background: linear-gradient(135deg, hsl(340 82% 97%), hsl(320 100% 95%));
+    --gradient-card: linear-gradient(135deg, rgba(255,255,255,0.8), rgba(255,255,255,0.6));
+    
+    /* Glassmorphism effects */
+    --glass-border: 1px solid rgba(255, 255, 255, 0.2);
+    --glass-backdrop: blur(10px);
+    --shadow-glow: 0 8px 32px rgba(340, 82%, 52%, 0.15);
 
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
