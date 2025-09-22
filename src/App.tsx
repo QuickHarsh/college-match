@@ -21,6 +21,7 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminEvents from "./pages/admin/AdminEvents";
 import AdminClubs from "./pages/admin/AdminClubs";
 import AdminAnnouncements from "./pages/admin/AdminAnnouncements";
+import About from "./pages/About";
 import CallInviteListener from "./components/CallInviteListener";
 
 const queryClient = new QueryClient();
@@ -50,6 +51,7 @@ const App = () => (
             <Route path="/admin/events" element={<AdminEvents />} />
             <Route path="/admin/clubs" element={<AdminClubs />} />
             <Route path="/admin/announcements" element={<AdminAnnouncements />} />
+            <Route path="/about" element={<About />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

@@ -54,6 +54,7 @@ export default function TopNav() {
           <GuardedLink to="/chats" label="Chats" icon={MessageCircle} />
           <GuardedLink to="/events" label="Events" icon={Calendar} />
           <GuardedLink to="/clubs" label="Clubs" icon={Users2} />
+          <NavLink to="/about" className="inline-flex items-center gap-1 px-3 py-2 rounded-md hover:bg-accent text-sm">About</NavLink>
         </div>
         <div className="flex items-center gap-2">
           <ThemeToggle />
@@ -82,6 +83,7 @@ export default function TopNav() {
                 <DropdownMenuItem onClick={() => navigate('/likes')}>Likes</DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate('/chats')}>Chats</DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate('/quiz')}>Compatibility Quiz</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/about')}>About</DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={signOut} className="text-red-600">Sign out</DropdownMenuItem>
               </DropdownMenuContent>

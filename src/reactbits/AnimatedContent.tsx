@@ -3,8 +3,8 @@ import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 // Register plugin once
-if (typeof window !== 'undefined' && (gsap as any).registerPlugin) {
-  (gsap as any).registerPlugin(ScrollTrigger);
+if (typeof window !== 'undefined') {
+  gsap.registerPlugin(ScrollTrigger);
 }
 
 interface AnimatedContentProps {
@@ -38,7 +38,12 @@ const AnimatedContent: React.FC<AnimatedContentProps> = ({
 }) => {
   const ref = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
+  // Use isomorphic layout effect to avoid hydration warnings in SSR,
+  // and to ensure measurements/animations run before paint on the client.
+  const useIsomorphicLayoutEffect =
+    typeof window !== 'undefined' ? React.useLayoutEffect : useEffect;
+
+  useIsomorphicLayoutEffect(() => {
     const el = ref.current;
     if (!el) return;
 
@@ -46,33 +51,33 @@ const AnimatedContent: React.FC<AnimatedContentProps> = ({
     const offset = reverse ? -distance : distance;
     const startPct = (1 - threshold) * 100;
 
-    gsap.set(el, {
-      [axis]: offset,
-      scale,
-      opacity: animateOpacity ? initialOpacity : 1
-    } as any);
+    // Scope all GSAP effects to this component. ctx.revert() will clean up
+    // only what we created here, including ScrollTriggers.
+    const ctx = gsap.context(() => {
+      gsap.set(el, {
+        [axis]: offset,
+        scale,
+        opacity: animateOpacity ? initialOpacity : 1
+      });
 
-    const tween = gsap.to(el, {
-      [axis]: 0,
-      scale: 1,
-      opacity: 1,
-      duration,
-      ease: ease as any,
-      delay,
-      onComplete,
-      scrollTrigger: {
-        trigger: el,
-        start: `top ${startPct}%`,
-        toggleActions: 'play none none none',
-        once: true
-      }
-    } as any);
+      gsap.to(el, {
+        [axis]: 0,
+        scale: 1,
+        opacity: 1,
+        duration,
+        ease: ease,
+        delay,
+        onComplete,
+        scrollTrigger: {
+          trigger: el,
+          start: `top ${startPct}%`,
+          toggleActions: 'play none none none',
+          once: true
+        }
+      });
+    }, el);
 
-    return () => {
-      ScrollTrigger.getAll().forEach(t => t.kill());
-      if (tween) tween.kill();
-      gsap.killTweensOf(el);
-    };
+    return () => ctx.revert();
   }, [
     distance,
     direction,
