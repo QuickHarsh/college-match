@@ -71,3 +71,41 @@ Yes, you can!
 To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
 
 Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+
+---
+
+# Deploying to Render (Static Site)
+
+This project is a Vite + React SPA and is ready to deploy on Render as a Static Site.
+
+## Prerequisites
+- A GitHub repository with this code.
+- Node 18+ on Render (Render uses a recent Node by default).
+
+## Build settings on Render
+- Build Command: `npm ci && npm run build`
+- Publish Directory: `dist`
+
+A `render.yaml` is included which configures:
+- A Static Site service named `uni-linkup`
+- SPA rewrites so all routes are served by `index.html`
+- Long-term caching for `/assets/*`
+
+## SPA rewrite rule
+If you create the Static Site via the dashboard, add a rewrite:
+- Source: `/*`
+- Destination: `/index.html`
+- Action: `Rewrite`
+
+## Environment variables
+The app reads Vite env variables at build time:
+- `VITE_SUPABASE_PROJECT_ID`
+- `VITE_SUPABASE_PUBLISHABLE_KEY`
+- `VITE_SUPABASE_URL`
+
+Set these in Render under the Static Site's Environment tab, or commit values via `render.yaml` (not recommended for secrets). A safe template is provided in `.env.example`.
+
+## Local development
+1. Copy `.env.example` to `.env` and fill values.
+2. Install deps: `npm i`
+3. Start dev server: `npm run dev`

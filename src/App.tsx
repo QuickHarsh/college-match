@@ -7,6 +7,21 @@ import { AuthProvider } from "@/hooks/useAuth";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
+import ProfileSetup from "./pages/ProfileSetup";
+import Matching from "./pages/Matching";
+import VideoCall from "./pages/VideoCall";
+import Events from "./pages/Events";
+import Likes from "./pages/Likes";
+import Chats from "./pages/Chats";
+import ChatRoom from "./pages/ChatRoom";
+import Clubs from "./pages/Clubs";
+import TopNav from "./components/TopNav";
+import Quiz from "./pages/Quiz";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminEvents from "./pages/admin/AdminEvents";
+import AdminClubs from "./pages/admin/AdminClubs";
+import AdminAnnouncements from "./pages/admin/AdminAnnouncements";
+import CallInviteListener from "./components/CallInviteListener";
 
 const queryClient = new QueryClient();
 
@@ -17,9 +32,24 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          <TopNav />
+          <CallInviteListener />
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/setup" element={<ProfileSetup />} />
+            <Route path="/match" element={<Matching />} />
+            <Route path="/match/video" element={<VideoCall />} />
+            <Route path="/events" element={<Events />} />
+            <Route path="/likes" element={<Likes />} />
+            <Route path="/chats" element={<Chats />} />
+            <Route path="/chat/:matchId" element={<ChatRoom />} />
+            <Route path="/clubs" element={<Clubs />} />
+            <Route path="/quiz" element={<Quiz />} />
+            <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/admin/events" element={<AdminEvents />} />
+            <Route path="/admin/clubs" element={<AdminClubs />} />
+            <Route path="/admin/announcements" element={<AdminAnnouncements />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
