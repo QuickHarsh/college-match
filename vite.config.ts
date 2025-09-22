@@ -9,6 +9,12 @@ export default defineConfig(({ mode }) => ({
     host: "::",
     port: 8080,
   },
+  preview: {
+    // Allow Render-assigned hostnames (and all *.onrender.com).
+    allowedHosts: ["college-match.onrender.com", ".onrender.com"],
+    host: true, // listen on all addresses (0.0.0.0 / ::)
+    port: 8080,
+  },
   plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
   resolve: {
     alias: {
