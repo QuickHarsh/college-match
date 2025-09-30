@@ -1,7 +1,7 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
-import { Heart, Users, ThumbsUp, MessageCircle, Calendar, Users2, Home } from 'lucide-react';
+import { Users, ThumbsUp, MessageCircle, Calendar, Users2, Home } from 'lucide-react';
 import { ComponentType } from 'react';
 import { motion } from 'framer-motion';
 import {
@@ -41,7 +41,8 @@ export default function TopNav() {
     >
       <div className="container mx-auto px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Heart className="h-6 w-6 text-primary" />
+          {/* Placeholder for logo (intentionally empty). Replace with your custom logo when ready. */}
+          <div className="h-6 w-6" aria-hidden />
           <button onClick={() => navigate('/')} className="font-semibold">CollegeMatch</button>
         </div>
         <div className="hidden md:flex items-center gap-1">
@@ -83,6 +84,7 @@ export default function TopNav() {
                 <DropdownMenuItem onClick={() => navigate('/setup')}>Profile</DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate('/likes')}>Likes</DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate('/chats')}>Chats</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/wallet')}>Wallet</DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate('/quiz')}>Compatibility Quiz</DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate('/about')}>About</DropdownMenuItem>
                 <DropdownMenuSeparator />

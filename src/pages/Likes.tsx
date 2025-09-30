@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Heart, UserPlus } from 'lucide-react';
+import { UserPlus } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -97,7 +97,8 @@ export default function Likes() {
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5 p-4">
       <div className="container mx-auto max-w-3xl">
         <div className="mb-6 flex items-center gap-2">
-          <Heart className="h-6 w-6 text-primary" />
+          {/* Placeholder for logo (intentionally empty). Replace with your custom logo when ready. */}
+          <div className="h-6 w-6" aria-hidden />
           <h1 className="text-2xl font-bold">Who liked you</h1>
         </div>
         <Card>

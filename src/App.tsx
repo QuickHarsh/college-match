@@ -25,6 +25,7 @@ import AdminClubs from "./pages/admin/AdminClubs";
 import AdminAnnouncements from "./pages/admin/AdminAnnouncements";
 import About from "./pages/About";
 import CallInviteListener from "./components/CallInviteListener";
+import Wallet from "./pages/Wallet";
 
 const queryClient = new QueryClient();
 
@@ -56,6 +57,7 @@ const App = () => (
             <Route path="/admin/clubs" element={<AdminClubs />} />
             <Route path="/admin/announcements" element={<AdminAnnouncements />} />
             <Route path="/about" element={<About />} />
+            <Route path="/wallet" element={<Wallet />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

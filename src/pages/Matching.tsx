@@ -4,7 +4,7 @@ import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-mo
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useAuth } from '@/hooks/useAuth';
-import { Heart, Sparkles, Users, ThumbsUp, SkipForward } from 'lucide-react';
+import { Sparkles, Users, ThumbsUp, SkipForward } from 'lucide-react';
 import { fetchCandidates, likeUser, type Candidate } from '@/lib/matching';
 import { toast } from '@/hooks/use-toast';
 
@@ -74,7 +74,8 @@ export default function Matching() {
       <div className="container max-w-3xl mx-auto text-center">
         <div className="mb-8">
           <div className="flex items-center justify-center gap-2">
-            <Heart className="h-10 w-10 text-primary fill-current" />
+            {/* Placeholder for logo (intentionally empty). Replace with your custom logo when ready. */}
+            <div className="h-10 w-10" aria-hidden />
             <h1 className="text-3xl font-bold">Smart Matching</h1>
           </div>
           <p className="text-muted-foreground mt-2">We match you based on interests, branch, year, and quiz compatibility.</p>
@@ -177,7 +178,8 @@ export default function Matching() {
               className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
               <motion.div initial={{ scale: 0.8 }} animate={{ scale: 1 }} exit={{ scale: 0.8 }}
                 className="bg-card border rounded-2xl p-8 text-center shadow-xl">
-                <Heart className="h-12 w-12 text-primary fill-current mx-auto mb-2" />
+                {/* Placeholder for logo (intentionally empty). Replace with your custom logo when ready. */}
+                <div className="h-12 w-12 mx-auto mb-2" aria-hidden />
                 <div className="text-xl font-bold mb-1">It’s a Match!</div>
                 <div className="text-sm text-muted-foreground">Connecting you to a video call...</div>
               </motion.div>

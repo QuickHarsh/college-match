@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/hooks/useAuth';
-import { Heart, Sparkles, Users, Mail, Lock, User, ArrowRight } from 'lucide-react';
+import { Sparkles, Users, Mail, Lock, User, ArrowRight } from 'lucide-react';
 
 export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
@@ -65,12 +65,13 @@ export default function Auth() {
       </div>
 
       {/* Floating Elements */}
+      {/* Placeholder for floating logo (intentionally empty). Replace with your custom logo when ready. */}
       <motion.div
-        className="absolute top-20 left-10 text-pink-400 opacity-60"
+        className="absolute top-20 left-10 opacity-60"
         animate={{ y: [-10, 10, -10] }}
         transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
       >
-        <Heart className="w-8 h-8" />
+        <div className="w-8 h-8" aria-hidden />
       </motion.div>
       <motion.div
         className="absolute top-40 right-16 text-purple-400 opacity-60"
@@ -108,7 +109,8 @@ export default function Auth() {
                 transition={{ type: "spring", stiffness: 400, damping: 10 }}
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-pink-400 to-purple-500 rounded-full blur-lg opacity-40 animate-pulse"></div>
-                <Heart className="relative h-16 w-16 text-pink-500 fill-current drop-shadow-lg" />
+                {/* Placeholder for main logo (intentionally empty). Replace with your custom logo when ready. */}
+                <div className="relative h-16 w-16" aria-hidden />
               </motion.div>
             </div>
             <motion.h1

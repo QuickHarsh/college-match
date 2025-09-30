@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
-import { Heart, Users, Calendar, Award, MessageCircle, Sparkles, ThumbsUp, GraduationCap, Shield, ArrowRight, Flame, Crown } from 'lucide-react';
+import { Users, Calendar, Award, MessageCircle, Sparkles, ThumbsUp, GraduationCap, Shield, ArrowRight, Flame, Crown } from 'lucide-react';
 import { useProfile } from '@/hooks/useProfile';
 import { Card, CardContent } from '@/components/ui/card';
 import CarouselHero, { type Slide } from '@/components/CarouselHero';
@@ -232,7 +232,8 @@ const Index = () => {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="text-center">
-          <Heart className="h-8 w-8 text-primary animate-pulse mx-auto mb-4" />
+          {/* Placeholder for logo (intentionally empty). Replace with your custom logo when ready. */}
+          <div className="h-8 w-8 mx-auto mb-4" aria-hidden />
           <p className="text-muted-foreground">Loading...</p>
         </div>
       </div>
