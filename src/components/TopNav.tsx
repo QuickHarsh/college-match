@@ -54,6 +54,7 @@ export default function TopNav() {
           <GuardedLink to="/chats" label="Chats" icon={MessageCircle} />
           <GuardedLink to="/events" label="Events" icon={Calendar} />
           <GuardedLink to="/clubs" label="Clubs" icon={Users2} />
+          <GuardedLink to="/groups" label="Groups" icon={Users2} />
           <NavLink to="/about" className="inline-flex items-center gap-1 px-3 py-2 rounded-md hover:bg-accent text-sm">About</NavLink>
         </div>
         <div className="flex items-center gap-2">

@@ -4,6 +4,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import AnimatedAestheticBG from "@/components/AnimatedAestheticBG";
 import { Button } from "@/components/ui/button";
 import { Mic, MicOff, Video as VideoIcon, VideoOff, PhoneOff } from "lucide-react";
 
@@ -26,6 +27,7 @@ export default function VideoCall() {
 
   const [camOn, setCamOn] = useState(true);
   const [micOn, setMicOn] = useState(true);
+  const [isInitiator, setIsInitiator] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) navigate('/auth');
@@ -93,14 +95,15 @@ export default function VideoCall() {
         }
       };
 
-      // Signaling via Supabase Realtime
-      const channel = supabase.channel(`webrtc-${roomId}`, { config: { broadcast: { self: false } } });
+      // Signaling via Supabase Realtime with presence
+      const channel = supabase.channel(`webrtc-${roomId}`, { config: { broadcast: { self: false }, presence: { key: user.id } } });
       channelRef.current = channel;
       let initiator = false;
       channel.on('presence', { event: 'sync' }, () => {
         const clients = Object.keys(channel.presenceState());
         initiator = clients.length === 1;
         stateRef.current.initiator = initiator;
+        setIsInitiator(initiator);
       });
 
       await channel.subscribe(async (status) => {
@@ -109,10 +112,12 @@ export default function VideoCall() {
 
         channel.on('broadcast', { event: 'offer' }, async (payload) => {
           if (!pc) return;
-          await pc.setRemoteDescription(new RTCSessionDescription(payload.payload));
-          const answer = await pc.createAnswer();
-          await pc.setLocalDescription(answer);
-          channel.send({ type: 'broadcast', event: 'answer', payload: answer });
+          try {
+            await pc.setRemoteDescription(new RTCSessionDescription(payload.payload));
+            const answer = await pc.createAnswer();
+            await pc.setLocalDescription(answer);
+            channel.send({ type: 'broadcast', event: 'answer', payload: answer });
+          } catch (e) { console.error('offer handling error', e); }
         });
         channel.on('broadcast', { event: 'answer' }, async (payload) => {
           if (!pc) return;
@@ -123,6 +128,15 @@ export default function VideoCall() {
         channel.on('broadcast', { event: 'ice' }, async (payload) => {
           if (!pc) return;
           try { await pc.addIceCandidate(new RTCIceCandidate(payload.payload)); } catch (e) { console.error('ICE add error', e); }
+        });
+        channel.on('broadcast', { event: 'need_offer' }, async () => {
+          try {
+            if (stateRef.current.initiator && pc.signalingState === 'stable') {
+              const offer = await pc.createOffer();
+              await pc.setLocalDescription(offer);
+              channel.send({ type: 'broadcast', event: 'offer', payload: offer });
+            }
+          } catch (e) { console.error('need_offer handling error', e); }
         });
         pc.onicecandidate = (ev) => { if (ev.candidate) channel.send({ type: 'broadcast', event: 'ice', payload: ev.candidate }); };
 
@@ -137,15 +151,21 @@ export default function VideoCall() {
           } catch (e) { console.error('negotiationneeded error', e); }
         };
 
-        setTimeout(async () => {
-          try {
-            if (stateRef.current.initiator && pc.signalingState === 'stable' && !pc.localDescription) {
-              const offer = await pc.createOffer();
-              await pc.setLocalDescription(offer);
-              channel.send({ type: 'broadcast', event: 'offer', payload: offer });
-            }
-          } catch (e) { console.error('initial offer error', e); }
-        }, 400);
+        // If NOT initiator, ask for offer immediately after subscribing
+        if (!stateRef.current.initiator) {
+          channel.send({ type: 'broadcast', event: 'need_offer', payload: { roomId } });
+        } else {
+          // Initiator sends an initial offer shortly after join if alone
+          setTimeout(async () => {
+            try {
+              if (pc.signalingState === 'stable' && !pc.localDescription) {
+                const offer = await pc.createOffer();
+                await pc.setLocalDescription(offer);
+                channel.send({ type: 'broadcast', event: 'offer', payload: offer });
+              }
+            } catch (e) { console.error('initial offer error', e); }
+          }, 300);
+        }
       });
     };
 
@@ -180,22 +200,23 @@ export default function VideoCall() {
   const endCall = () => { navigate('/match'); };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5 p-4">
-      <div className="container mx-auto max-w-5xl">
-        <Card>
-          <CardHeader>
+    <div className="relative min-h-screen w-full text-white p-0 overflow-hidden">
+      <AnimatedAestheticBG intensity={0.55} />
+      <div className="relative w-full">
+        <Card className="w-full bg-transparent border-none shadow-none">
+          <CardHeader className="hidden">
             <CardTitle>Video Match</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="grid md:grid-cols-2 gap-4">
-              <div className="rounded-lg overflow-hidden bg-black aspect-video">
-                <video ref={localVideoRef} autoPlay playsInline muted className="h-full w-full object-cover" />
-              </div>
-              <div className="rounded-lg overflow-hidden bg-black aspect-video">
+          <CardContent className="p-0">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              <div className="w-full aspect-video bg-black">
                 <video ref={remoteVideoRef} autoPlay playsInline className="h-full w-full object-cover" />
               </div>
+              <div className="w-full aspect-video bg-black">
+                <video ref={localVideoRef} autoPlay playsInline muted className="h-full w-full object-cover" />
+              </div>
             </div>
-            <div className="mt-4 flex items-center justify-center gap-3">
+            <div className="absolute bottom-4 left-0 right-0 flex items-center justify-center gap-3">
               <Button variant={micOn ? 'secondary' : 'default'} onClick={toggleMic}>
                 {micOn ? <Mic className="h-4 w-4 mr-2" /> : <MicOff className="h-4 w-4 mr-2" />} {micOn ? 'Mute' : 'Unmute'}
               </Button>

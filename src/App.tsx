@@ -15,6 +15,8 @@ import Likes from "./pages/Likes";
 import Chats from "./pages/Chats";
 import ChatRoom from "./pages/ChatRoom";
 import Clubs from "./pages/Clubs";
+import Groups from "./pages/Groups";
+import GroupRoom from "./pages/GroupRoom";
 import TopNav from "./components/TopNav";
 import Quiz from "./pages/Quiz";
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -46,6 +48,8 @@ const App = () => (
             <Route path="/chats" element={<Chats />} />
             <Route path="/chat/:matchId" element={<ChatRoom />} />
             <Route path="/clubs" element={<Clubs />} />
+            <Route path="/groups" element={<Groups />} />
+            <Route path="/groups/:clubId" element={<GroupRoom />} />
             <Route path="/quiz" element={<Quiz />} />
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/admin/events" element={<AdminEvents />} />

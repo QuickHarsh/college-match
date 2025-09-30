@@ -72,9 +72,16 @@ export default function ChatRoom() {
         channel.on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `chat_room_id=eq.${room.id}` }, (payload) => {
           const msg = payload.new as ChatMessage;
           setMsgs((prev) => {
-            // prevent duplicate if we optimistically added the same id
+            // prevent duplicate by id
             if (prev.find((p) => p.id === msg.id)) return prev;
-            return [...prev, msg];
+            // also remove any optimistic temp message from same sender with identical content within recent window
+            const cutoff = Date.now() - 60_000;
+            const filtered = prev.filter((p) => {
+              if (!p.id.startsWith('temp-')) return true;
+              const t = Date.parse(p.created_at);
+              return !(p.sender_id === msg.sender_id && p.content === msg.content && t >= cutoff);
+            });
+            return [...filtered, msg];
           });
           setTimeout(() => listRef.current?.scrollTo({ top: 1e9, behavior: 'smooth' }), 50);
         });

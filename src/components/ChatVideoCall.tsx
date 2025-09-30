@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Mic, MicOff, Video as VideoIcon, VideoOff, PhoneOff } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import AnimatedAestheticBG from '@/components/AnimatedAestheticBG';
 
 export default function ChatVideoCall({ roomId, initiator, onEnd }: { roomId: string; initiator: boolean; onEnd: () => void }) {
   const { user } = useAuth();
@@ -56,7 +57,21 @@ export default function ChatVideoCall({ roomId, initiator, onEnd }: { roomId: st
 
       channel.on('broadcast', { event: 'offer' }, async (payload) => {
         if (!pcRef.current) return;
-        await pcRef.current.setRemoteDescription(new RTCSessionDescription((payload as any).payload));
+        try {
+          await pcRef.current.setRemoteDescription(new RTCSessionDescription((payload as any).payload));
+          // Always create and send an answer when receiving an offer
+          const answer = await pcRef.current.createAnswer();
+          await pcRef.current.setLocalDescription(answer);
+          channel.send({ type: 'broadcast', event: 'answer', payload: answer });
+        } catch (e) { console.error('offer handling', e); }
+      });
+      channel.on('broadcast', { event: 'answer' }, async (payload) => {
+        if (!pcRef.current) return;
+        try {
+          if (!pcRef.current.currentRemoteDescription) {
+            await pcRef.current.setRemoteDescription(new RTCSessionDescription((payload as any).payload));
+          }
+        } catch (e) { console.error('answer handling', e); }
       });
       channel.on('broadcast', { event: 'ice' }, async (payload) => {
         if (!pcRef.current) return;
@@ -134,7 +149,7 @@ export default function ChatVideoCall({ roomId, initiator, onEnd }: { roomId: st
         localStreamRef.current?.getTracks().forEach((t) => t.stop());
       } catch (e) { console.error('cleanup', e); }
     };
-  }, [roomId, initiator, onEnd]);
+  }, [roomId, initiator, onEnd, user?.id]);
 
   const toggleCam = () => {
     const stream = localStreamRef.current; if (!stream) return;
@@ -148,14 +163,15 @@ export default function ChatVideoCall({ roomId, initiator, onEnd }: { roomId: st
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4">
-      <Card className="w-full max-w-3xl bg-background/95">
-        <div className="grid md:grid-cols-2 gap-3 p-3">
-          <div className="rounded-lg overflow-hidden bg-black aspect-video">
-            <video ref={localVideoRef} autoPlay playsInline muted className="h-full w-full object-cover" />
-          </div>
-          <div className="rounded-lg overflow-hidden bg-black aspect-video">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-0 overflow-hidden">
+      <AnimatedAestheticBG intensity={0.5} />
+      <Card className="relative w-full bg-background/70 backdrop-blur">
+        <div className="grid grid-cols-2 gap-2 p-2">
+          <div className="rounded-md overflow-hidden bg-black/70 aspect-video w-full">
             <video ref={remoteVideoRef} autoPlay playsInline className="h-full w-full object-cover" />
+          </div>
+          <div className="rounded-md overflow-hidden bg-black/70 aspect-video w-full">
+            <video ref={localVideoRef} autoPlay playsInline muted className="h-full w-full object-cover" />
           </div>
         </div>
         <div className="px-4 pb-4 flex items-center justify-center gap-3">
