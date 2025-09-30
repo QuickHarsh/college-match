@@ -6,7 +6,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
-import { Input } from '@/components/ui/input';
 
 declare global {
   interface Window {
@@ -66,26 +65,11 @@ export default function Wallet() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const { balance, tx, reload } = useWallet(user?.id);
-  const [customAmount, setCustomAmount] = useState<number>(100);
   const keyId = useMemo(() => (import.meta as any).env?.VITE_RAZORPAY_KEY_ID as string | undefined, []);
 
   useEffect(() => {
     if (!loading && !user) navigate('/auth');
   }, [user, loading, navigate]);
-
-  const devCredit = async (amount: number) => {
-    if (!user) return;
-    try {
-      const { data: ok, error } = await (supabase as any).rpc('credit_coins', { p_user_id: user.id, p_amount: amount, p_desc: 'Dev credit' });
-      if (error) throw error;
-      if (ok) {
-        toast({ title: `Added ${amount} coins`, description: 'Balance updated.' });
-        reload();
-      }
-    } catch (e) {
-      toast({ title: 'Error', description: e instanceof Error ? e.message : 'Failed to credit coins', variant: 'destructive' });
-    }
-  };
 
   const buyWithRazorpay = async (amountCoins: number) => {
     if (!user) return;
@@ -153,14 +137,9 @@ export default function Wallet() {
                   <div className="text-sm mb-2">₹{p.priceINR}</div>
                   <div className="flex gap-2">
                     <Button size="sm" onClick={() => buyWithRazorpay(p.coins)}>Buy</Button>
-                    <Button size="sm" variant="outline" onClick={() => devCredit(p.coins)}>Add (dev)</Button>
                   </div>
                 </div>
               ))}
-            </div>
-            <div className="mt-4 flex items-center gap-2">
-              <Input type="number" value={customAmount} onChange={(e) => setCustomAmount(parseInt(e.target.value || '0'))} className="w-32" />
-              <Button variant="outline" onClick={() => devCredit(customAmount)} disabled={!customAmount || customAmount <= 0}>Add custom (dev)</Button>
             </div>
             {!keyId && (
               <div className="text-xs text-muted-foreground mt-3">Note: Set VITE_RAZORPAY_KEY_ID to enable the Buy flow.</div>
