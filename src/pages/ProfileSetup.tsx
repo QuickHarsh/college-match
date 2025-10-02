@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -44,6 +45,7 @@ export default function ProfileSetup() {
     interests: [] as string[],
     profile_image_url: ''
   });
+  const [connectionsCount, setConnectionsCount] = useState<number>(0);
 
   const loadProfile = useCallback(async () => {
     if (!user) return;
@@ -74,6 +76,21 @@ export default function ProfileSetup() {
     }
     // Load existing profile if it exists
     loadProfile();
+    // Load connections count (head + count)
+    (async () => {
+      try {
+        const sb: any = supabase as any;
+        const { count, error } = await sb
+          .from('matches')
+          .select('id', { count: 'exact', head: true })
+          .or(`user1_id.eq.${user.id},user2_id.eq.${user.id}`)
+          .eq('is_mutual', true);
+        if (error) throw error;
+        setConnectionsCount(count || 0);
+      } catch {
+        // silent; profile still loads
+      }
+    })();
   }, [user, navigate, loadProfile]);
 
   const handleInterestToggle = (interest: string) => {
@@ -143,6 +160,9 @@ export default function ProfileSetup() {
             <p className="text-muted-foreground">
               Let's set up your profile to find your perfect college match!
             </p>
+            <div className="mt-3 flex items-center justify-center gap-4 text-sm">
+              <div className="px-3 py-1 rounded-full bg-primary/10">Connections: <span className="font-semibold">{connectionsCount}</span></div>
+            </div>
           </div>
 
           <Card>

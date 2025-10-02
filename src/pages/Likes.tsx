@@ -38,7 +38,19 @@ export default function Likes() {
           .select('liker_id')
           .eq('liked_id', user.id);
         if (error) throw error;
-        const likerIds: string[] = ((data || []) as Array<{ liker_id: string }>).map((d) => d.liker_id);
+        let likerIds: string[] = ((data || []) as Array<{ liker_id: string }>).map((d) => d.liker_id);
+        // Remove users who are already in connections (mutual matches)
+        if (likerIds.length > 0) {
+          const list = likerIds.map((id) => id).join(',');
+          const { data: mutuals, error: mErr } = await sb
+            .from('matches')
+            .select('user1_id, user2_id, is_mutual')
+            .eq('is_mutual', true)
+            .or(`and(user1_id.eq.${user.id},user2_id.in.(${list})),and(user2_id.eq.${user.id},user1_id.in.(${list}))`);
+          if (mErr) throw mErr;
+          const connected = new Set<string>((mutuals || []).map((m: any) => (m.user1_id === user.id ? m.user2_id : m.user1_id)));
+          likerIds = likerIds.filter((id) => !connected.has(id));
+        }
         if (likerIds.length === 0) {
           setItems([]);
           return;
@@ -84,6 +96,8 @@ export default function Likes() {
         .from('likes')
         .upsert({ liker_id: user.id, liked_id: likerId }, { onConflict: 'liker_id,liked_id', ignoreDuplicates: true });
       if (likeErr) throw likeErr;
+      // Optimistically remove from incoming likes list
+      setItems((prev) => prev.filter((it) => it.liker_id !== likerId));
       toast({ title: "Liked back!", description: "If it's mutual, chat will unlock." });
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Failed to like back';

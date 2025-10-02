@@ -4,14 +4,16 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
-import Index from "./pages/Index";
 import Auth from "./pages/Auth";
+import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import ProfileSetup from "./pages/ProfileSetup";
 import Matching from "./pages/Matching";
 import VideoCall from "./pages/VideoCall";
 import Events from "./pages/Events";
 import Likes from "./pages/Likes";
+import Search from "./pages/Search";
+import Connections from "./pages/Connections";
 import Chats from "./pages/Chats";
 import ChatRoom from "./pages/ChatRoom";
 import Clubs from "./pages/Clubs";
@@ -44,8 +46,10 @@ const App = () => (
             <Route path="/setup" element={<ProfileSetup />} />
             <Route path="/match" element={<Matching />} />
             <Route path="/match/video" element={<VideoCall />} />
+            <Route path="/search" element={<Search />} />
             <Route path="/events" element={<Events />} />
             <Route path="/likes" element={<Likes />} />
+            <Route path="/connections" element={<Connections />} />
             <Route path="/chats" element={<Chats />} />
             <Route path="/chat/:matchId" element={<ChatRoom />} />
             <Route path="/clubs" element={<Clubs />} />

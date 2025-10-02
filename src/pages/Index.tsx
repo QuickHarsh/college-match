@@ -253,21 +253,29 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5">
       {/* Main Content (TopNav handles header) */}
-      <main className="container mx-auto px-4 py-8">
-        <div className="text-center mb-8">
+      <main className="container mx-auto px-4 pt-6 pb-24">
+        <div className="text-center mb-8 md:mb-10">
           <motion.h2
             ref={heroRef}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, ease: 'easeOut' }}
-            className="text-4xl font-bold text-foreground mb-3"
+            className="text-4xl md:text-5xl font-extrabold mb-3 bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary"
           >
-            <ShinyText text="Welcome to CollegeMatch" disabled={false} speed={3.5} className="inline-block" />
+            <ShinyText text="Welcome to CollegeMatch" disabled={false} speed={3.2} className="inline-block" />
           </motion.h2>
           <AnimatedContent distance={16} duration={0.6}>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto">
               Discover people, join clubs, attend campus events, and find meaningful connections.
             </p>
+            <div className="mt-4 flex items-center justify-center gap-3">
+              <Button size="sm" className="md:size-default" onClick={() => handleProtectedNav('/match')}>
+                Start Matching <ArrowRight className="h-4 w-4 ml-2" />
+              </Button>
+              <Button size="sm" variant="secondary" className="md:size-default" onClick={() => handleProtectedNav('/search')}>
+                Explore Search
+              </Button>
+            </div>
           </AnimatedContent>
         </div>
 
@@ -283,7 +291,7 @@ const Index = () => {
 
         {/* Announcements banner (admin broadcast) */}
         {announcement && (
-          <div className="mb-8 rounded-lg border p-4 bg-secondary/10 flex items-center justify-between">
+          <div className="mb-8 rounded-lg border p-4 md:p-5 bg-secondary/10 flex items-center justify-between">
             <div className="text-left">
               <div className="font-semibold flex items-center gap-2"><Crown className="h-4 w-4 text-primary" /> Announcement</div>
               <div className="text-sm text-muted-foreground">{announcement}</div>
@@ -314,7 +322,7 @@ const Index = () => {
         )}
 
       {/* Quick Actions */}
-      <div className="grid md:grid-cols-3 gap-4 max-w-5xl mx-auto mb-10">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 max-w-5xl mx-auto mb-10">
         <motion.div whileHover={{ y: -4 }} whileTap={{ scale: 0.98 }}>
           <Card className="cursor-pointer" onClick={() => handleProtectedNav('/match')}>
             <CardContent className="p-6 text-center">
@@ -345,7 +353,7 @@ const Index = () => {
       </div>
 
       {/* Matches at Your College */}
-      <div className="max-w-5xl mx-auto mb-10">
+      <div className="max-w-5xl mx-auto mb-12">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-lg font-semibold">Matches at your college</h3>
           <Button variant="ghost" size="sm" onClick={() => handleProtectedNav('/match')}>See all</Button>
@@ -377,7 +385,7 @@ const Index = () => {
       </div>
 
       {/* Today in Campus: Events + Clubs */}
-      <div className="grid md:grid-cols-2 gap-6 max-w-5xl mx-auto">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto">
         <motion.div initial={{ opacity: 0, y: 12 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }}>
           <Card>
             <CardContent className="p-6">
@@ -489,7 +497,7 @@ const Index = () => {
 
       {/* Safety & Community */}
       <div className="text-center mt-12 max-w-3xl mx-auto">
-        <div className="grid md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <motion.div initial={{ opacity: 0, y: 12 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }} className="text-center p-6 bg-card rounded-lg border">
             <Users className="h-10 w-10 text-primary mx-auto mb-3" />
             <h3 className="font-semibold mb-1">Smart Matching</h3>
