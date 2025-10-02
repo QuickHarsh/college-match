@@ -110,8 +110,8 @@ function CoFoundersCarousel() {
       praise:
         "I designed and built this app end-to-end — from real-time features and sleek animations to a polished, mobile-first UI. Let's build meaningful campus connections!",
       // Replace with your real photo URL
-      img: 'public/harsh.jpg',
-      durationMs: 7000, // Longer display for Harsh
+      img: 'harsh.jpg',
+      durationMs: 8000, // Longer display for Harsh
     },
     {
       id: 'shikhar',
@@ -119,7 +119,7 @@ function CoFoundersCarousel() {
       title: 'Co-founder',
       praise:
         'Driving vision, product thinking, and community impact to make CollegeMatch truly resonate with students.',
-      img: 'public/shikhar.jpeg',
+      img: 'shikhar.jpeg',
       durationMs: 3500, // Shorter display for Shikhar
     },
   ] as const;
