@@ -108,7 +108,7 @@ export default function AdminClubs() {
 
   return (
     <AdminGuard>
-      <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5 p-4">
+      <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5 pt-20 p-4">
         <div className="container mx-auto max-w-6xl space-y-4">
           <div className="flex items-center justify-between">
             <h1 className="text-2xl font-bold">Manage Clubs</h1>

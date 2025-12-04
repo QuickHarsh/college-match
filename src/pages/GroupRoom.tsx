@@ -2,20 +2,22 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { toast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import ClubGroupChat from '@/components/ClubGroupChat';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Users, LogOut, Loader2 } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 export default function GroupRoom() {
   const { clubId } = useParams();
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const [clubName, setClubName] = useState<string>('');
+  const [clubIcon, setClubIcon] = useState<string>('');
   const [isMember, setIsMember] = useState<boolean>(false);
   const [leaving, setLeaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     if (!loading && !user) navigate('/auth');
@@ -25,14 +27,16 @@ export default function GroupRoom() {
     const load = async () => {
       if (!user || !clubId) return;
       try {
+        setIsLoading(true);
         const sb: any = supabase as any;
         const { data: club, error: cErr } = await sb
           .from('interest_clubs')
-          .select('id, name')
+          .select('id, name, icon')
           .eq('id', clubId)
           .maybeSingle();
         if (cErr || !club) throw cErr || new Error('Club not found');
         setClubName(club.name);
+        setClubIcon(club.icon);
 
         const { data: mem, error: mErr } = await sb
           .from('club_members')
@@ -43,8 +47,10 @@ export default function GroupRoom() {
         if (mErr) throw mErr;
         setIsMember(!!mem);
       } catch (e) {
-        const msg = e instanceof Error ? e.message : 'Failed to load group';
-        toast({ title: 'Error', description: msg, variant: 'destructive' });
+        console.error(e);
+        toast.error('Failed to load group');
+      } finally {
+        setIsLoading(false);
       }
     };
     load();
@@ -61,11 +67,11 @@ export default function GroupRoom() {
         .eq('club_id', clubId)
         .eq('user_id', user.id);
       if (error) throw error;
-      toast({ title: 'Left club', description: `You left ${clubName}` });
+      toast.success(`You left ${clubName}`);
       navigate('/groups');
     } catch (e) {
-      const msg = e instanceof Error ? e.message : 'Failed to leave club';
-      toast({ title: 'Error', description: msg, variant: 'destructive' });
+      console.error(e);
+      toast.error('Failed to leave club');
     } finally {
       setLeaving(false);
     }
@@ -73,32 +79,73 @@ export default function GroupRoom() {
 
   if (!clubId) return null;
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950">
+        <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5 p-4">
-      <div className="container mx-auto max-w-4xl space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" onClick={() => navigate('/groups')}>
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-            <h1 className="text-2xl font-bold">{clubName || 'Group'}</h1>
+    <div className="fixed inset-0 bg-white dark:bg-gray-950 flex flex-col z-50">
+      {/* Header */}
+      <div className="h-16 border-b border-gray-100 dark:border-gray-800 bg-white/80 dark:bg-gray-950/80 backdrop-blur-md flex items-center justify-between px-4 sticky top-0 z-10">
+        <div className="flex items-center gap-3">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate('/groups')}
+            className="rounded-full hover:bg-gray-100 dark:hover:bg-gray-800"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-100 to-cyan-100 dark:from-blue-900/30 dark:to-cyan-900/30 flex items-center justify-center text-xl shadow-inner">
+              {clubIcon || '⭐'}
+            </div>
+            <div>
+              <h1 className="font-bold text-gray-900 dark:text-white leading-tight">
+                {clubName || 'Group'}
+              </h1>
+              <p className="text-xs text-green-500 font-medium flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                Online
+              </p>
+            </div>
           </div>
-          {isMember && (
-            <Button size="sm" variant="destructive" onClick={leaveClub} disabled={leaving}>
-              {leaving ? 'Leaving...' : 'Leave Club'}
-            </Button>
-          )}
         </div>
 
+        {isMember && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={leaveClub}
+            disabled={leaving}
+            className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+          >
+            <LogOut className="w-4 h-4 mr-2" />
+            Leave
+          </Button>
+        )}
+      </div>
+
+      {/* Chat Area */}
+      <div className="flex-1 overflow-hidden bg-gray-50 dark:bg-black/20">
         {!isMember ? (
-          <Card>
-            <CardHeader>
-              <CardTitle>Join required</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-sm opacity-80">You are not a member of this club. Join it from the Clubs page to access the group chat.</div>
-            </CardContent>
-          </Card>
+          <div className="flex flex-col items-center justify-center h-full p-6 text-center space-y-4">
+            <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center">
+              <Users className="w-8 h-8 text-gray-400" />
+            </div>
+            <h3 className="text-xl font-bold">Join Required</h3>
+            <p className="text-muted-foreground max-w-xs">
+              You need to be a member of this club to view and send messages.
+            </p>
+            <Button onClick={() => navigate('/clubs')}>
+              Go to Clubs
+            </Button>
+          </div>
         ) : (
           <ClubGroupChat clubId={clubId} />
         )}

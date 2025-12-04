@@ -15,6 +15,7 @@ export type Profile = {
   interests: string[] | null;
   is_verified: boolean | null;
   profile_image_url: string | null;
+  is_admin?: boolean;
 };
 
 export function useProfile() {
@@ -33,7 +34,7 @@ export function useProfile() {
     setError(null);
     const { data, error } = await supabase
       .from('profiles')
-      .select('*')
+      .select('*, is_admin')
       .eq('user_id', user.id)
       .single();
 

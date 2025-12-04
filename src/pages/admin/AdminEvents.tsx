@@ -56,14 +56,29 @@ export default function AdminEvents() {
   const submit = async () => {
     try {
       if (!form.title) throw new Error('Title is required');
+      if (!form.start_time) throw new Error('Start Time is required');
+
+      // Ensure dates are ISO formatted if present
+      const formatToISO = (dateStr?: string | null) => {
+        if (!dateStr) return null;
+        return new Date(dateStr).toISOString();
+      };
+
+      // Derive event_date (YYYY-MM-DD) from start_time
+      const eventDate = form.start_time ? new Date(form.start_time).toISOString().split('T')[0] : null;
+
       const payload = {
         title: form.title,
         description: form.description || null,
         location: form.location || null,
         banner_image_url: form.banner_image_url || null,
-        start_time: form.start_time || null,
-        end_time: form.end_time || null,
+        start_time: formatToISO(form.start_time),
+        end_time: formatToISO(form.end_time),
+        event_date: eventDate,
       } as any;
+
+      console.log('Submitting payload:', payload);
+
       const sb: any = supabase as any;
       setSaving(true);
       if (editing) {
@@ -77,8 +92,13 @@ export default function AdminEvents() {
       }
       await load();
       resetForm();
-    } catch (e) {
-      toast({ title: 'Error', description: e instanceof Error ? e.message : 'Failed to save', variant: 'destructive' });
+    } catch (e: any) {
+      console.error('Submit Error:', e);
+      toast({
+        title: 'Error',
+        description: e.message || e.details || 'Failed to save',
+        variant: 'destructive'
+      });
     } finally {
       setSaving(false);
     }
@@ -112,7 +132,7 @@ export default function AdminEvents() {
 
   return (
     <AdminGuard>
-      <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5 p-4">
+      <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5 pt-20 p-4">
         <div className="container mx-auto max-w-6xl space-y-4">
           <div className="flex items-center justify-between">
             <h1 className="text-2xl font-bold">Manage Events</h1>

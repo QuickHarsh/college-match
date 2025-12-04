@@ -11,6 +11,7 @@ export type Candidate = {
   bio: string | null;
   interests: string[] | null;
   profile_image_url: string | null;
+  is_verified?: boolean;
 };
 
 export async function fetchCandidates(currentUserId: string, limit = 20): Promise<Candidate[]> {

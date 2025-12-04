@@ -6,6 +6,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
+import { Wallet as WalletIcon, Coins, History, CreditCard } from 'lucide-react';
+import TiltedCard from '@/reactbits/TiltedCard';
+import StarBorder from '@/reactbits/StarBorder';
+import ShinyText from '@/reactbits/ShinyText';
+import { motion } from 'framer-motion';
 
 declare global {
   interface Window {
@@ -111,58 +116,107 @@ export default function Wallet() {
   };
 
   const packages = [
-    { coins: 50, label: 'Starter', priceINR: 50 },
-    { coins: 120, label: 'Value', priceINR: 100 },
-    { coins: 300, label: 'Pro', priceINR: 240 },
+    { coins: 50, label: 'Starter', priceINR: 50, color: 'from-blue-500 to-cyan-500' },
+    { coins: 120, label: 'Value', priceINR: 100, color: 'from-purple-500 to-pink-500' },
+    { coins: 300, label: 'Pro', priceINR: 240, color: 'from-amber-500 to-orange-500' },
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5 p-4">
-      <div className="container mx-auto max-w-3xl space-y-4">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Wallet</h1>
-          <div className="text-sm text-muted-foreground">Available coins: <span className="text-foreground font-semibold">{balance}</span></div>
+    <div className="min-h-screen bg-background pt-20 p-4 md:p-8">
+      <div className="container mx-auto max-w-5xl space-y-8">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+          <div>
+            <h1 className="text-4xl font-extrabold mb-2">
+              <ShinyText text="My Wallet" disabled={false} speed={3} className="inline-block" />
+            </h1>
+            <p className="text-muted-foreground">Manage your coins and transactions</p>
+          </div>
+          <div className="flex items-center gap-3 px-6 py-3 bg-card border rounded-2xl shadow-sm">
+            <div className="p-2 bg-yellow-500/10 rounded-full">
+              <Coins className="h-6 w-6 text-yellow-500" />
+            </div>
+            <div>
+              <div className="text-sm text-muted-foreground">Balance</div>
+              <div className="text-2xl font-bold">{balance} <span className="text-sm font-normal text-muted-foreground">coins</span></div>
+            </div>
+          </div>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Add coins</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid sm:grid-cols-3 gap-3">
-              {packages.map((p) => (
-                <div key={p.coins} className="border rounded-md p-3">
-                  <div className="font-medium">{p.label}</div>
-                  <div className="text-sm text-muted-foreground mb-2">{p.coins} coins</div>
-                  <div className="text-sm mb-2">₹{p.priceINR}</div>
-                  <div className="flex gap-2">
-                    <Button size="sm" onClick={() => buyWithRazorpay(p.coins)}>Buy</Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-            {!keyId && (
-              <div className="text-xs text-muted-foreground mt-3">Note: Set VITE_RAZORPAY_KEY_ID to enable the Buy flow.</div>
-            )}
-          </CardContent>
-        </Card>
+        <section>
+          <div className="flex items-center gap-2 mb-6">
+            <CreditCard className="h-5 w-5 text-primary" />
+            <h2 className="text-xl font-bold">Top Up Coins</h2>
+          </div>
 
-        <Card>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {packages.map((p, i) => (
+              <motion.div
+                key={p.coins}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.1 }}
+                className="flex justify-center"
+              >
+                <TiltedCard
+                  imageSrc="https://images.unsplash.com/photo-1620714223084-8fcacc6dfd8d?q=80&w=1000&auto=format&fit=crop"
+                  altText={`${p.label} Package`}
+                  captionText={`${p.coins} Coins`}
+                  containerHeight="300px"
+                  containerWidth="100%"
+                  rotateAmplitude={12}
+                  scaleOnHover={1.05}
+                  showMobileWarning={false}
+                  showTooltip={false}
+                  displayOverlayContent={true}
+                  overlayContent={
+                    <div className="absolute inset-0 flex flex-col justify-between p-6 bg-gradient-to-br from-black/60 to-black/30 text-white h-full">
+                      <div>
+                        <h3 className="text-2xl font-bold mb-1">{p.label}</h3>
+                        <p className="text-white/80 text-sm">Get {p.coins} coins instantly</p>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-3xl font-bold mb-4">₹{p.priceINR}</div>
+                        <StarBorder as="button" className="w-full cursor-pointer" color="white" speed="4s" onClick={() => buyWithRazorpay(p.coins)}>
+                          <span className="font-bold text-sm">Buy Now</span>
+                        </StarBorder>
+                      </div>
+                    </div>
+                  }
+                />
+              </motion.div>
+            ))}
+          </div>
+          {!keyId && (
+            <div className="text-center text-xs text-muted-foreground mt-6">Note: Set VITE_RAZORPAY_KEY_ID to enable the Buy flow.</div>
+          )}
+        </section>
+
+        <Card className="border-muted/50 shadow-lg">
           <CardHeader>
-            <CardTitle>Recent activity</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <History className="h-5 w-5 text-muted-foreground" />
+              Recent Activity
+            </CardTitle>
           </CardHeader>
           <CardContent>
             {tx.length === 0 ? (
-              <div className="text-sm text-muted-foreground">No transactions yet.</div>
+              <div className="text-center py-10 text-muted-foreground">No transactions yet. Start by adding some coins!</div>
             ) : (
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {tx.map((t) => (
-                  <div key={t.id} className="flex items-center justify-between border rounded-md p-2 text-sm">
-                    <div>
-                      <div className="font-medium">{t.transaction_type}</div>
-                      <div className="text-xs text-muted-foreground">{t.description || '—'}</div>
+                  <div key={t.id} className="flex items-center justify-between p-4 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <div className={`p-2 rounded-full ${t.amount >= 0 ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}`}>
+                        {t.amount >= 0 ? <Coins className="h-4 w-4" /> : <WalletIcon className="h-4 w-4" />}
+                      </div>
+                      <div>
+                        <div className="font-medium">{t.transaction_type}</div>
+                        <div className="text-xs text-muted-foreground">{t.description || '—'}</div>
+                      </div>
                     </div>
-                    <div className={t.amount >= 0 ? 'text-emerald-600' : 'text-red-600'}>{t.amount >= 0 ? "+" : ""}{t.amount}</div>
+                    <div className={`font-bold ${t.amount >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      {t.amount >= 0 ? "+" : ""}{t.amount}
+                    </div>
                   </div>
                 ))}
               </div>

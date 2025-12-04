@@ -3,10 +3,10 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import AnimatedAestheticBG from "@/components/AnimatedAestheticBG";
 import { Button } from "@/components/ui/button";
-import { Mic, MicOff, Video as VideoIcon, VideoOff, PhoneOff } from "lucide-react";
+import { Mic, MicOff, Video as VideoIcon, VideoOff, PhoneOff, Users, Signal, Settings } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "sonner";
 
 type RTCState = {
   pc: RTCPeerConnection | null;
@@ -27,7 +27,8 @@ export default function VideoCall() {
 
   const [camOn, setCamOn] = useState(true);
   const [micOn, setMicOn] = useState(true);
-  const [isInitiator, setIsInitiator] = useState(false);
+  const [isConnected, setIsConnected] = useState(false);
+  const [remoteStreamActive, setRemoteStreamActive] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) navigate('/auth');
@@ -71,6 +72,7 @@ export default function VideoCall() {
         localStreamRef.current = stream;
         if (localVideoRef.current) localVideoRef.current.srcObject = stream;
       } catch {
+        toast.error("Camera/Microphone access denied");
         return;
       }
 
@@ -85,13 +87,26 @@ export default function VideoCall() {
       localStreamRef.current?.getTracks().forEach((t) => pc.addTrack(t, localStreamRef.current as MediaStream));
       const remoteStream = new MediaStream();
       if (remoteVideoRef.current) remoteVideoRef.current.srcObject = remoteStream;
+
       pc.ontrack = (ev) => {
         const [stream] = ev.streams;
         if (remoteVideoRef.current && stream) {
           remoteVideoRef.current.srcObject = stream;
+          setRemoteStreamActive(true);
         } else {
-          // fallback to aggregating tracks
           ev.streams[0].getTracks().forEach((t) => remoteStream.addTrack(t));
+          setRemoteStreamActive(true);
+        }
+      };
+
+      pc.onconnectionstatechange = () => {
+        if (pc.connectionState === 'connected') {
+          setIsConnected(true);
+          toast.success("Connected!");
+        } else if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed') {
+          setIsConnected(false);
+          setRemoteStreamActive(false);
+          toast.info("Connection lost");
         }
       };
 
@@ -103,7 +118,6 @@ export default function VideoCall() {
         const clients = Object.keys(channel.presenceState());
         initiator = clients.length === 1;
         stateRef.current.initiator = initiator;
-        setIsInitiator(initiator);
       });
 
       await channel.subscribe(async (status) => {
@@ -200,35 +214,97 @@ export default function VideoCall() {
   const endCall = () => { navigate('/match'); };
 
   return (
-    <div className="relative min-h-screen w-full text-white p-0 overflow-hidden">
-      <AnimatedAestheticBG intensity={0.55} />
-      <div className="relative w-full">
-        <Card className="w-full bg-transparent border-none shadow-none">
-          <CardHeader className="hidden">
-            <CardTitle>Video Match</CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-              <div className="w-full aspect-video bg-black">
-                <video ref={remoteVideoRef} autoPlay playsInline className="h-full w-full object-cover" />
-              </div>
-              <div className="w-full aspect-video bg-black">
-                <video ref={localVideoRef} autoPlay playsInline muted className="h-full w-full object-cover" />
+    <div className="relative h-screen w-full bg-black overflow-hidden flex flex-col">
+
+      {/* Remote Video (Full Screen) */}
+      <div className="absolute inset-0 z-0">
+        <video
+          ref={remoteVideoRef}
+          autoPlay
+          playsInline
+          className="w-full h-full object-cover"
+        />
+        {/* Overlay if no remote video */}
+        {!remoteStreamActive && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-900/90 backdrop-blur-sm text-white">
+            <div className="relative">
+              <div className="absolute inset-0 bg-pink-500/20 rounded-full blur-xl animate-pulse" />
+              <div className="w-24 h-24 rounded-full bg-gray-800 border-4 border-gray-700 flex items-center justify-center mb-6 relative z-10">
+                <Users className="w-10 h-10 text-gray-400" />
               </div>
             </div>
-            <div className="absolute bottom-4 left-0 right-0 flex items-center justify-center gap-3">
-              <Button variant={micOn ? 'secondary' : 'default'} onClick={toggleMic}>
-                {micOn ? <Mic className="h-4 w-4 mr-2" /> : <MicOff className="h-4 w-4 mr-2" />} {micOn ? 'Mute' : 'Unmute'}
-              </Button>
-              <Button variant={camOn ? 'secondary' : 'default'} onClick={toggleCam}>
-                {camOn ? <VideoIcon className="h-4 w-4 mr-2" /> : <VideoOff className="h-4 w-4 mr-2" />} {camOn ? 'Camera Off' : 'Camera On'}
-              </Button>
-              <Button variant="destructive" onClick={endCall}>
-                <PhoneOff className="h-4 w-4 mr-2" /> End
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+            <h2 className="text-2xl font-bold mb-2">Waiting for match...</h2>
+            <p className="text-gray-400">They should be here any moment!</p>
+          </div>
+        )}
+      </div>
+
+      {/* Local Video (Floating PiP) */}
+      <motion.div
+        drag
+        dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
+        className="absolute top-4 right-4 z-20 w-32 md:w-48 aspect-[3/4] md:aspect-video bg-gray-900 rounded-2xl overflow-hidden shadow-2xl border border-white/10 cursor-grab active:cursor-grabbing"
+      >
+        <video
+          ref={localVideoRef}
+          autoPlay
+          playsInline
+          muted
+          className={`w-full h-full object-cover ${!camOn ? 'hidden' : ''}`}
+        />
+        {!camOn && (
+          <div className="w-full h-full flex items-center justify-center bg-gray-800">
+            <VideoOff className="w-8 h-8 text-gray-500" />
+          </div>
+        )}
+        <div className="absolute bottom-2 left-2 text-xs font-medium text-white/80 bg-black/40 px-2 py-0.5 rounded-full backdrop-blur-sm">
+          You
+        </div>
+      </motion.div>
+
+      {/* Top Bar (Status) */}
+      <div className="absolute top-0 left-0 right-0 z-10 p-4 flex justify-between items-start bg-gradient-to-b from-black/60 to-transparent">
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/20 backdrop-blur-md border border-white/10 text-white/90 text-sm">
+          <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-yellow-500 animate-pulse'}`} />
+          {isConnected ? 'Connected' : 'Connecting...'}
+        </div>
+        <Button variant="ghost" size="icon" className="text-white hover:bg-white/10 rounded-full">
+          <Settings className="w-5 h-5" />
+        </Button>
+      </div>
+
+      {/* Bottom Controls Bar */}
+      <div className="absolute bottom-8 left-0 right-0 z-20 flex justify-center">
+        <div className="flex items-center gap-4 px-6 py-3 rounded-full bg-black/40 backdrop-blur-xl border border-white/10 shadow-2xl">
+          <Button
+            variant={micOn ? "secondary" : "destructive"}
+            size="icon"
+            className={`w-12 h-12 rounded-full transition-all ${micOn ? 'bg-white/10 hover:bg-white/20 text-white' : ''}`}
+            onClick={toggleMic}
+          >
+            {micOn ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
+          </Button>
+
+          <Button
+            variant={camOn ? "secondary" : "destructive"}
+            size="icon"
+            className={`w-12 h-12 rounded-full transition-all ${camOn ? 'bg-white/10 hover:bg-white/20 text-white' : ''}`}
+            onClick={toggleCam}
+          >
+            {camOn ? <VideoIcon className="w-5 h-5" /> : <VideoOff className="w-5 h-5" />}
+          </Button>
+
+          <div className="w-px h-8 bg-white/20 mx-2" />
+
+          <Button
+            variant="destructive"
+            size="icon"
+            className="w-14 h-14 rounded-full bg-red-500 hover:bg-red-600 shadow-lg shadow-red-500/20"
+            onClick={endCall}
+          >
+            <PhoneOff className="w-6 h-6 fill-current" />
+          </Button>
+        </div>
       </div>
     </div>
   );

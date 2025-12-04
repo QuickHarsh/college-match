@@ -3,13 +3,16 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { toast } from '@/hooks/use-toast';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, ArrowLeft, CheckCircle2 } from 'lucide-react';
+import { motion } from 'framer-motion';
+import MagnetLines from '@/reactbits/MagnetLines';
+import SpotlightCard from '@/reactbits/SpotlightCard';
+import ShinyText from '@/reactbits/ShinyText';
 
 const QUESTIONS = [
   { id: 1, text: 'Introvert or Extrovert?', options: ['Introvert', 'Extrovert'] },
@@ -78,43 +81,85 @@ export default function Quiz() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5 p-4">
-      <div className="container mx-auto max-w-3xl">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2"><Sparkles className="h-5 w-5" /> Compatibility Quiz</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="mb-6">
-              <div className="text-sm text-muted-foreground mb-2">Complete the quiz to get better matches.</div>
-              <Progress value={percent} className="h-2" />
-              <div className="text-xs mt-1">{percent}% complete</div>
-            </div>
+    <div className="min-h-screen bg-background relative overflow-hidden pt-20">
+      <div className="absolute inset-0 z-0 opacity-20 pointer-events-none">
+        <MagnetLines rows={10} columns={10} containerSize="100%" lineColor="rgba(147, 51, 234, 0.2)" lineWidth="1px" lineHeight="40px" baseAngle={0} style={{ width: '100%', height: '100%' }} />
+      </div>
 
-            <div className="space-y-5">
-              {QUESTIONS.map((q) => (
-                <div key={q.id} className="border rounded-md p-4">
-                  <div className="font-medium mb-3">{q.text}</div>
+      <div className="container mx-auto max-w-4xl p-6 relative z-10">
+        <div className="mb-8 flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-extrabold mb-2">
+              <ShinyText text="Compatibility Quiz" disabled={false} speed={3} className="inline-block" />
+            </h1>
+            <p className="text-muted-foreground">Answer these to find your perfect match.</p>
+          </div>
+          <div className="text-right">
+            <div className="text-2xl font-bold text-primary">{percent}%</div>
+            <div className="text-xs text-muted-foreground">Completed</div>
+          </div>
+        </div>
+
+        <div className="sticky top-4 z-50 mb-8 bg-background/80 backdrop-blur-md p-4 rounded-2xl border shadow-sm">
+          <Progress value={percent} className="h-3 bg-secondary" />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+          {QUESTIONS.map((q, i) => (
+            <motion.div
+              key={q.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.05 }}
+            >
+              <SpotlightCard className="h-full bg-card/50 backdrop-blur-sm border-white/5" spotlightColor="rgba(168, 85, 247, 0.1)">
+                <div className="p-6">
+                  <div className="flex items-start gap-3 mb-4">
+                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm">
+                      {q.id}
+                    </div>
+                    <div className="font-semibold text-lg">{q.text}</div>
+                  </div>
+
                   <RadioGroup value={answers[q.id] || ''} onValueChange={(val) => setAnswers((prev) => ({ ...prev, [q.id]: val }))}>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                    <div className="grid grid-cols-2 gap-3">
                       {q.options.map((opt) => (
-                        <Label key={opt} className={`border rounded-md p-2 text-center cursor-pointer ${answers[q.id] === opt ? 'bg-primary text-primary-foreground' : ''}`}>
+                        <Label
+                          key={opt}
+                          className={`relative flex items-center justify-center p-3 rounded-xl border-2 cursor-pointer transition-all duration-200 ${answers[q.id] === opt
+                            ? 'border-primary bg-primary/10 text-primary font-bold shadow-sm'
+                            : 'border-muted hover:border-primary/50 hover:bg-muted/50'
+                            }`}
+                        >
                           <RadioGroupItem value={opt} className="sr-only" />
-                          {opt}
+                          <span>{opt}</span>
+                          {answers[q.id] === opt && (
+                            <motion.div
+                              initial={{ scale: 0 }}
+                              animate={{ scale: 1 }}
+                              className="absolute top-2 right-2"
+                            >
+                              <CheckCircle2 className="h-3 w-3 text-primary" />
+                            </motion.div>
+                          )}
                         </Label>
                       ))}
                     </div>
                   </RadioGroup>
                 </div>
-              ))}
-            </div>
+              </SpotlightCard>
+            </motion.div>
+          ))}
+        </div>
 
-            <div className="mt-6 flex items-center justify-end gap-2">
-              <Button variant="outline" onClick={() => navigate(-1)}>Back</Button>
-              <Button onClick={save} disabled={saving}>{saving ? 'Saving...' : 'Save & Continue'}</Button>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="fixed bottom-6 right-6 left-6 md:left-auto md:w-auto flex items-center justify-end gap-4 z-50">
+          <Button variant="outline" size="lg" onClick={() => navigate(-1)} className="rounded-full shadow-lg bg-background/80 backdrop-blur-md">
+            <ArrowLeft className="mr-2 h-4 w-4" /> Back
+          </Button>
+          <Button size="lg" onClick={save} disabled={saving} className="rounded-full shadow-lg shadow-primary/25 px-8">
+            {saving ? 'Saving...' : 'Save & Find Matches'} <Sparkles className="ml-2 h-4 w-4" />
+          </Button>
+        </div>
       </div>
     </div>
   );

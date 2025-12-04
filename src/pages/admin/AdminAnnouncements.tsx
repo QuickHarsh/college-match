@@ -92,7 +92,7 @@ export default function AdminAnnouncements() {
 
   return (
     <AdminGuard>
-      <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5 p-4">
+      <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5 pt-20 p-4">
         <div className="container mx-auto max-w-4xl space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">

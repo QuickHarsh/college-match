@@ -2,7 +2,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -12,9 +11,13 @@ import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
-import { Heart, User, GraduationCap, Calendar, MapPin, Sparkles, X } from 'lucide-react';
+import { Heart, User, GraduationCap, Sparkles, X, Save } from 'lucide-react';
 import { useCallback } from 'react';
 import ProfilePhotoUploader from '@/components/ProfilePhotoUploader';
+import MagnetLines from '@/reactbits/MagnetLines';
+import SpotlightCard from '@/reactbits/SpotlightCard';
+import ShinyText from '@/reactbits/ShinyText';
+import StarBorder from '@/reactbits/StarBorder';
 
 const INTERESTS = [
   'Anime & Manga', 'Tech & Programming', 'Fitness & Sports', 'Music & Arts',
@@ -147,50 +150,62 @@ export default function ProfileSetup() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5 p-4">
-      <div className="container mx-auto max-w-2xl">
+    <div className="min-h-screen bg-background relative overflow-hidden pt-20">
+      <div className="absolute inset-0 z-0 opacity-30 pointer-events-none">
+        <MagnetLines rows={15} columns={15} containerSize="100%" lineColor="rgba(120, 120, 120, 0.2)" lineWidth="1px" lineHeight="30px" baseAngle={0} style={{ width: '100%', height: '100%' }} />
+      </div>
+
+      <div className="container mx-auto max-w-3xl p-6 relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
           <div className="text-center mb-8">
-            <Heart className="h-12 w-12 text-primary mx-auto mb-4 fill-current" />
-            <h1 className="text-3xl font-bold text-foreground mb-2">Complete Your Profile</h1>
-            <p className="text-muted-foreground">
+            <Heart className="h-12 w-12 text-primary mx-auto mb-4 fill-current animate-pulse" />
+            <h1 className="text-4xl font-extrabold mb-2">
+              <ShinyText text="Complete Your Profile" disabled={false} speed={3} className="inline-block" />
+            </h1>
+            <p className="text-muted-foreground text-lg">
               Let's set up your profile to find your perfect college match!
             </p>
             <div className="mt-3 flex items-center justify-center gap-4 text-sm">
-              <div className="px-3 py-1 rounded-full bg-primary/10">Connections: <span className="font-semibold">{connectionsCount}</span></div>
+              <div className="px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 backdrop-blur-sm">Connections: <span className="font-bold text-primary">{connectionsCount}</span></div>
             </div>
           </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <User className="h-5 w-5" />
-                Profile Information
-              </CardTitle>
-              <CardDescription>
-                Tell us about yourself to get better matches
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-6">
+          <SpotlightCard className="bg-card/60 backdrop-blur-xl border-white/10 shadow-2xl" spotlightColor="rgba(255, 255, 255, 0.1)">
+            <div className="p-8">
+              <div className="flex items-center gap-3 mb-6 pb-4 border-b border-border/50">
+                <div className="p-2 rounded-lg bg-primary/10">
+                  <User className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold">Profile Information</h2>
+                  <p className="text-sm text-muted-foreground">Tell us about yourself to get better matches</p>
+                </div>
+              </div>
+
+              <form onSubmit={handleSubmit} className="space-y-8">
                 {/* Photo Upload */}
-                <div className="space-y-2">
-                  <Label>Profile Photo</Label>
+                <div className="space-y-4 flex flex-col items-center">
+                  <Label className="text-base">Profile Photo</Label>
                   {user && (
-                    <ProfilePhotoUploader
-                      userId={user.id}
-                      value={profile.profile_image_url}
-                      onChange={(url) => setProfile((p) => ({ ...p, profile_image_url: url }))}
-                    />
+                    <div className="relative group">
+                      <div className="absolute -inset-1 bg-gradient-to-r from-primary to-purple-600 rounded-full blur opacity-25 group-hover:opacity-75 transition duration-1000 group-hover:duration-200"></div>
+                      <div className="relative">
+                        <ProfilePhotoUploader
+                          userId={user.id}
+                          value={profile.profile_image_url}
+                          onChange={(url) => setProfile((p) => ({ ...p, profile_image_url: url }))}
+                        />
+                      </div>
+                    </div>
                   )}
                 </div>
 
                 {/* Basic Information */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <Label htmlFor="full_name">Full Name</Label>
                     <Input
@@ -198,6 +213,7 @@ export default function ProfileSetup() {
                       value={profile.full_name}
                       onChange={(e) => setProfile(prev => ({ ...prev, full_name: e.target.value }))}
                       required
+                      className="bg-background/50 border-muted-foreground/20 focus:border-primary h-11"
                     />
                   </div>
                   <div className="space-y-2">
@@ -210,17 +226,18 @@ export default function ProfileSetup() {
                       value={profile.age}
                       onChange={(e) => setProfile(prev => ({ ...prev, age: e.target.value }))}
                       required
+                      className="bg-background/50 border-muted-foreground/20 focus:border-primary h-11"
                     />
                   </div>
                 </div>
 
                 {/* College Information */}
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2 text-lg font-semibold">
+                <div className="space-y-6 pt-4">
+                  <div className="flex items-center gap-2 text-lg font-semibold text-primary">
                     <GraduationCap className="h-5 w-5" />
                     College Information
                   </div>
-                  
+
                   <div className="space-y-2">
                     <Label htmlFor="college_name">College Name</Label>
                     <Input
@@ -229,14 +246,15 @@ export default function ProfileSetup() {
                       onChange={(e) => setProfile(prev => ({ ...prev, college_name: e.target.value }))}
                       placeholder="e.g., Indian Institute of Technology Delhi"
                       required
+                      className="bg-background/50 border-muted-foreground/20 focus:border-primary h-11"
                     />
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <Label htmlFor="branch">Branch/Major</Label>
                       <Select value={profile.branch} onValueChange={(value) => setProfile(prev => ({ ...prev, branch: value }))}>
-                        <SelectTrigger>
+                        <SelectTrigger className="bg-background/50 border-muted-foreground/20 focus:border-primary h-11">
                           <SelectValue placeholder="Select your branch" />
                         </SelectTrigger>
                         <SelectContent>
@@ -251,7 +269,7 @@ export default function ProfileSetup() {
                     <div className="space-y-2">
                       <Label htmlFor="year_of_study">Year of Study</Label>
                       <Select value={profile.year_of_study} onValueChange={(value) => setProfile(prev => ({ ...prev, year_of_study: value }))}>
-                        <SelectTrigger>
+                        <SelectTrigger className="bg-background/50 border-muted-foreground/20 focus:border-primary h-11">
                           <SelectValue placeholder="Select year" />
                         </SelectTrigger>
                         <SelectContent>
@@ -275,19 +293,20 @@ export default function ProfileSetup() {
                     onChange={(e) => setProfile(prev => ({ ...prev, bio: e.target.value }))}
                     placeholder="Tell us about yourself, your hobbies, what you're looking for..."
                     rows={4}
+                    className="bg-background/50 border-muted-foreground/20 focus:border-primary resize-none"
                   />
                 </div>
 
                 {/* Interests */}
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2 text-lg font-semibold">
+                <div className="space-y-4 pt-4">
+                  <div className="flex items-center gap-2 text-lg font-semibold text-primary">
                     <Sparkles className="h-5 w-5" />
                     Interests ({profile.interests.length}/8)
                   </div>
                   <p className="text-sm text-muted-foreground">
                     Select up to 8 interests to help us find your perfect match
                   </p>
-                  
+
                   <div className="flex flex-wrap gap-2">
                     {INTERESTS.map((interest) => {
                       const isSelected = profile.interests.includes(interest);
@@ -295,11 +314,10 @@ export default function ProfileSetup() {
                         <Badge
                           key={interest}
                           variant={isSelected ? "default" : "outline"}
-                          className={`cursor-pointer transition-all ${
-                            isSelected 
-                              ? "bg-primary text-primary-foreground" 
-                              : "hover:bg-primary/10"
-                          } ${profile.interests.length >= 8 && !isSelected ? "opacity-50 cursor-not-allowed" : ""}`}
+                          className={`cursor-pointer transition-all px-3 py-1.5 text-sm ${isSelected
+                            ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25 hover:bg-primary/90"
+                            : "hover:bg-primary/10 border-muted-foreground/30"
+                            } ${profile.interests.length >= 8 && !isSelected ? "opacity-50 cursor-not-allowed" : ""}`}
                           onClick={() => {
                             if (profile.interests.length < 8 || isSelected) {
                               handleInterestToggle(interest);
@@ -314,12 +332,16 @@ export default function ProfileSetup() {
                   </div>
                 </div>
 
-                <Button type="submit" className="w-full" size="lg" disabled={loading}>
-                  {loading ? "Saving..." : "Save Profile & Start Matching"}
-                </Button>
+                <div className="pt-6">
+                  <StarBorder as="button" className="w-full cursor-pointer" color="cyan" speed="4s" disabled={loading}>
+                    <span className="flex items-center justify-center font-bold text-lg py-1">
+                      {loading ? "Saving..." : <><Save className="mr-2 h-5 w-5" /> Save Profile & Start Matching</>}
+                    </span>
+                  </StarBorder>
+                </div>
               </form>
-            </CardContent>
-          </Card>
+            </div>
+          </SpotlightCard>
         </motion.div>
       </div>
     </div>

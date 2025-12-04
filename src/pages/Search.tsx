@@ -2,13 +2,17 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { likeUser, type Candidate } from '@/lib/matching';
 import { ThumbsUp, Sparkles, Search as SearchIcon } from 'lucide-react';
+import { motion } from 'framer-motion';
+import ShinyText from '@/reactbits/ShinyText';
+import SpotlightCard from '@/reactbits/SpotlightCard';
+import StarBorder from '@/reactbits/StarBorder';
+import PixelTrail from '@/reactbits/PixelTrail';
 
 export default function Search() {
   const { user, loading } = useAuth();
@@ -75,78 +79,121 @@ export default function Search() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5 p-4">
-      <div className="container mx-auto max-w-5xl">
-        <div className="mb-6">
-          <div className="flex items-center gap-2">
-            {/* Placeholder for logo (intentionally empty). Replace with your custom logo when ready. */}
-            <div className="h-6 w-6" aria-hidden />
-            <h1 className="text-2xl font-bold">Explore</h1>
+    <div className="min-h-screen bg-background relative overflow-hidden pt-20">
+      {/* PixelTrail Background */}
+      <PixelTrail pixelSize={24} fadeDuration={800} pixelColor="rgba(59, 130, 246, 0.15)" />
+
+      <div className="container mx-auto max-w-6xl p-6 relative z-10">
+        <div className="mb-10 text-center md:text-left">
+          <div className="flex items-center justify-center md:justify-start gap-3 mb-2">
+            <h1 className="text-4xl font-extrabold">
+              <ShinyText text="Explore & Connect" disabled={false} speed={3} className="inline-block" />
+            </h1>
           </div>
-          <p className="text-sm text-muted-foreground mt-1">Discover verified students across colleges. Search and like profiles. Mutual likes create a match and unlock chat.</p>
+          <p className="text-muted-foreground text-lg max-w-2xl mx-auto md:mx-0">
+            Discover verified students across colleges. Search by name, branch, or interests.
+          </p>
         </div>
 
-        <Card className="mb-4">
-          <CardContent className="py-4">
-            <div className="flex items-center gap-2">
-              <div className="relative flex-1">
-                <SearchIcon className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Search by name, branch, college..."
-                  className="pl-8"
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') load();
-                  }}
-                />
-              </div>
-              <Button onClick={load} disabled={loadingResults}>
-                <Sparkles className="h-4 w-4 mr-2" /> Search
-              </Button>
+        <div className="mb-12 max-w-3xl mx-auto md:mx-0">
+          <div className="relative flex items-center gap-3">
+            <div className="relative flex-1 group">
+              <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
+              <Input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search by name, branch, college..."
+                className="pl-12 h-14 text-lg rounded-2xl border-2 border-muted bg-background/50 backdrop-blur-sm focus:border-primary transition-all shadow-sm"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') load();
+                }}
+              />
             </div>
-          </CardContent>
-        </Card>
+            <StarBorder as="button" className="cursor-pointer h-14 px-8" color="cyan" speed="3s" onClick={load} disabled={loadingResults}>
+              <span className="flex items-center font-bold text-base">
+                <Sparkles className="h-4 w-4 mr-2" /> Search
+              </span>
+            </StarBorder>
+          </div>
+        </div>
 
         {loadingResults && (
-          <div className="text-center text-sm text-muted-foreground py-8">Searching...</div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
+            {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
+              <div key={i} className="h-64 rounded-2xl bg-muted/50 animate-pulse" />
+            ))}
+          </div>
         )}
 
         {!loadingResults && results.length === 0 && (
-          <div className="text-center text-sm text-muted-foreground py-8">No profiles found. Try a different search.</div>
+          <div className="text-center py-20">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-muted mb-4">
+              <SearchIcon className="h-8 w-8 text-muted-foreground" />
+            </div>
+            <h3 className="text-xl font-semibold mb-2">No profiles found</h3>
+            <p className="text-muted-foreground">Try adjusting your search terms to find more people.</p>
+          </div>
         )}
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-          {results.map((p) => (
-            <div key={p.user_id} className="group relative overflow-hidden rounded-xl border bg-card">
-              <div className="aspect-square w-full bg-muted overflow-hidden">
-                {p.profile_image_url ? (
-                  <img src={p.profile_image_url} alt={p.full_name} className="h-full w-full object-cover group-hover:scale-105 transition-transform" />
-                ) : (
-                  <div className="h-full w-full flex items-center justify-center text-xs text-muted-foreground">No Photo</div>
-                )}
-              </div>
-              <div className="p-2">
-                <div className="font-medium truncate">{p.full_name}</div>
-                <div className="text-xs text-muted-foreground truncate">
-                  {p.branch || 'Student'} {p.college_name ? `• ${p.college_name}` : ''}
-                </div>
-                {p.interests && p.interests.length > 0 && (
-                  <div className="mt-1 flex flex-wrap gap-1 max-h-8 overflow-hidden">
-                    {p.interests.slice(0, 3).map((i) => (
-                      <span key={i} className="px-2 py-0.5 rounded-full text-[10px] bg-primary/10">
-                        {i}
-                      </span>
-                    ))}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {results.map((p, i) => (
+            <motion.div
+              key={p.user_id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.05, duration: 0.4 }}
+            >
+              <SpotlightCard className="h-full bg-card/50 backdrop-blur-sm border-white/10" spotlightColor="rgba(139, 92, 246, 0.15)">
+                <div className="p-0 h-full flex flex-col">
+                  <div className="aspect-[4/3] w-full bg-muted overflow-hidden relative">
+                    {p.profile_image_url ? (
+                      <img src={p.profile_image_url} alt={p.full_name} className="h-full w-full object-cover transition-transform duration-500 hover:scale-110" />
+                    ) : (
+                      <div className="h-full w-full flex items-center justify-center text-muted-foreground bg-secondary/30">
+                        <span className="text-4xl">🎓</span>
+                      </div>
+                    )}
+                    <div className="absolute top-3 right-3">
+                      {p.is_verified && (
+                        <span className="px-2 py-1 rounded-full bg-green-500/20 text-green-500 text-xs font-bold backdrop-blur-md border border-green-500/20">
+                          Verified
+                        </span>
+                      )}
+                    </div>
                   </div>
-                )}
-              </div>
-              <div className="absolute inset-x-2 bottom-2 flex justify-end opacity-0 group-hover:opacity-100 transition-opacity">
-                <Button size="sm" onClick={() => handleLike(p.user_id)}>
-                  <ThumbsUp className="h-4 w-4 mr-1" /> Like
-                </Button>
-              </div>
-            </div>
+
+                  <div className="p-5 flex-1 flex flex-col">
+                    <div className="mb-1">
+                      <h3 className="font-bold text-lg truncate">{p.full_name}</h3>
+                      <p className="text-sm text-muted-foreground truncate">
+                        {p.branch || 'Student'} {p.college_name ? `• ${p.college_name}` : ''}
+                      </p>
+                    </div>
+
+                    {p.interests && p.interests.length > 0 && (
+                      <div className="mt-3 flex flex-wrap gap-1.5 mb-4">
+                        {p.interests.slice(0, 3).map((tag) => (
+                          <span key={tag} className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-primary/10 text-primary border border-primary/10">
+                            {tag}
+                          </span>
+                        ))}
+                        {p.interests.length > 3 && (
+                          <span className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-muted text-muted-foreground">
+                            +{p.interests.length - 3}
+                          </span>
+                        )}
+                      </div>
+                    )}
+
+                    <div className="mt-auto pt-2">
+                      <Button className="w-full rounded-xl font-semibold shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all" onClick={() => handleLike(p.user_id)}>
+                        <ThumbsUp className="h-4 w-4 mr-2" /> Connect
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </SpotlightCard>
+            </motion.div>
           ))}
         </div>
       </div>

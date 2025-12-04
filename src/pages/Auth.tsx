@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/hooks/useAuth';
-import { Sparkles, Users, Mail, Lock, User, ArrowRight } from 'lucide-react';
+import { Sparkles, Users, Mail, Lock, User, ArrowRight, Eye, EyeOff, Github, Chrome } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
@@ -14,7 +15,8 @@ export default function Auth() {
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [loading, setLoading] = useState(false);
-  
+  const [showPassword, setShowPassword] = useState(false);
+
   const { signUp, signIn, user } = useAuth();
   const navigate = useNavigate();
 
@@ -34,7 +36,9 @@ export default function Auth() {
     setLoading(true);
 
     if (!validateCollegeEmail(email)) {
-      alert('Please use your college email address (must contain .edu, .ac., university, or college)');
+      toast.error('Invalid Email Domain', {
+        description: 'Please use your college email address (must contain .edu, .ac., university, or college)',
+      });
       setLoading(false);
       return;
     }
@@ -42,21 +46,46 @@ export default function Auth() {
     try {
       if (isLogin) {
         await signIn(email, password);
+        toast.success('Welcome back!', {
+          description: 'You have successfully signed in.',
+        });
       } else {
         if (!fullName.trim()) {
-          alert('Please enter your full name');
+          toast.error('Missing Information', {
+            description: 'Please enter your full name.',
+          });
           setLoading(false);
           return;
         }
         await signUp(email, password, fullName);
+        toast.success('Account Created!', {
+          description: 'Please check your email to verify your account.',
+        });
       }
+    } catch (error) {
+      console.error(error);
+      toast.error('Authentication Failed', {
+        description: (error as Error).message || 'Something went wrong. Please try again.',
+      });
     } finally {
       setLoading(false);
     }
   };
 
+  const handleSocialLogin = (provider: string) => {
+    toast.info('Coming Soon', {
+      description: `${provider} login will be available shortly!`,
+    });
+  };
+
+  const handleForgotPassword = () => {
+    toast.info('Coming Soon', {
+      description: 'Password reset functionality will be available shortly!',
+    });
+  };
+
   return (
-    <div className="min-h-screen relative overflow-hidden">
+    <div className="min-h-screen relative overflow-hidden flex items-center justify-center bg-gray-50 dark:bg-gray-950">
       {/* Animated Background */}
       <div className="absolute inset-0 bg-gradient-to-br from-pink-50 via-purple-50 to-indigo-50 dark:from-gray-900 dark:via-purple-900 dark:to-pink-900">
         <div className="absolute inset-0 opacity-40" style={{
@@ -65,13 +94,12 @@ export default function Auth() {
       </div>
 
       {/* Floating Elements */}
-      {/* Placeholder for floating logo (intentionally empty). Replace with your custom logo when ready. */}
       <motion.div
         className="absolute top-20 left-10 opacity-60"
         animate={{ y: [-10, 10, -10] }}
         transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
       >
-        <div className="w-8 h-8" aria-hidden />
+        <div className="w-8 h-8 rounded-full bg-pink-400/20 blur-xl" />
       </motion.div>
       <motion.div
         className="absolute top-40 right-16 text-purple-400 opacity-60"
@@ -88,33 +116,34 @@ export default function Auth() {
         <Users className="w-7 h-7" />
       </motion.div>
 
-      <div className="relative z-10 min-h-screen flex items-center justify-center p-4">
+      <div className="relative z-10 w-full max-w-md p-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
-          className="w-full max-w-md space-y-8"
+          className="space-y-6"
         >
           {/* Logo and Title */}
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="text-center space-y-4"
+            className="text-center space-y-2"
           >
-            <div className="flex justify-center">
+            <div className="flex justify-center mb-4">
               <motion.div
                 className="relative"
                 whileHover={{ scale: 1.1 }}
                 transition={{ type: "spring", stiffness: 400, damping: 10 }}
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-pink-400 to-purple-500 rounded-full blur-lg opacity-40 animate-pulse"></div>
-                {/* Placeholder for main logo (intentionally empty). Replace with your custom logo when ready. */}
-                <div className="relative h-16 w-16" aria-hidden />
+                <div className="relative h-16 w-16 bg-gradient-to-tr from-pink-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-xl transform rotate-3 hover:rotate-6 transition-transform duration-300">
+                  <Sparkles className="w-8 h-8 text-white" />
+                </div>
               </motion.div>
             </div>
             <motion.h1
-              className="text-4xl font-bold bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent"
+              className="text-4xl font-bold bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent tracking-tight"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.4 }}
@@ -136,26 +165,26 @@ export default function Auth() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.4 }}
           >
-            <Card className="backdrop-blur-lg bg-white/80 dark:bg-gray-900/80 border-white/20 shadow-2xl">
-              <CardHeader className="text-center space-y-2">
+            <Card className="backdrop-blur-xl bg-white/90 dark:bg-gray-900/90 border-white/20 shadow-2xl overflow-hidden">
+              <CardHeader className="text-center space-y-2 pb-2">
                 <motion.div
                   key={isLogin ? 'login' : 'signup'}
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.4 }}
                 >
-                  <CardTitle className="text-2xl bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent">
+                  <CardTitle className="text-2xl font-bold bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent">
                     {isLogin ? 'Welcome Back! 💕' : 'Join the Fun! 🎉'}
                   </CardTitle>
                   <CardDescription className="text-gray-600 dark:text-gray-300">
-                    {isLogin 
-                      ? 'Sign in to your account to start connecting' 
-                      : 'Create your account with your college email'
+                    {isLogin
+                      ? 'Sign in to continue your journey'
+                      : 'Create an account with your college email'
                     }
                   </CardDescription>
                 </motion.div>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-6">
                 <AnimatePresence mode="wait">
                   <motion.form
                     key={isLogin ? 'login-form' : 'signup-form'}
@@ -174,63 +203,77 @@ export default function Auth() {
                         transition={{ duration: 0.3 }}
                         className="space-y-2"
                       >
-                        <Label htmlFor="fullName" className="flex items-center gap-2 text-gray-700 dark:text-gray-200">
-                          <User className="w-4 h-4 text-pink-500" />
+                        <Label htmlFor="fullName" className="text-sm font-medium text-gray-700 dark:text-gray-200">
                           Full Name
                         </Label>
-                        <motion.div whileFocus={{ scale: 1.02 }} transition={{ type: "spring", stiffness: 400 }}>
+                        <div className="relative">
+                          <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                           <Input
                             id="fullName"
                             type="text"
-                            placeholder="Enter your full name"
+                            placeholder="John Doe"
                             value={fullName}
                             onChange={(e) => setFullName(e.target.value)}
-                            className="transition-all duration-300 focus:ring-2 focus:ring-pink-400/50 border-gray-200 dark:border-gray-700"
+                            className="pl-10 h-11 bg-gray-50/50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-pink-500/20 transition-all duration-300"
                             required
                           />
-                        </motion.div>
+                        </div>
                       </motion.div>
                     )}
-                    
+
                     <div className="space-y-2">
-                      <Label htmlFor="email" className="flex items-center gap-2 text-gray-700 dark:text-gray-200">
-                        <Mail className="w-4 h-4 text-purple-500" />
+                      <Label htmlFor="email" className="text-sm font-medium text-gray-700 dark:text-gray-200">
                         College Email
                       </Label>
-                      <motion.div whileFocus={{ scale: 1.02 }} transition={{ type: "spring", stiffness: 400 }}>
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                         <Input
                           id="email"
                           type="email"
-                          placeholder="your.name@college.edu"
+                          placeholder="student@college.edu"
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
-                          className="transition-all duration-300 focus:ring-2 focus:ring-purple-400/50 border-gray-200 dark:border-gray-700"
+                          className="pl-10 h-11 bg-gray-50/50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-purple-500/20 transition-all duration-300"
                           required
                         />
-                      </motion.div>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
-                        <Sparkles className="w-3 h-3" />
-                        Use your official college email address for verification
-                      </p>
+                      </div>
                     </div>
-                    
+
                     <div className="space-y-2">
-                      <Label htmlFor="password" className="flex items-center gap-2 text-gray-700 dark:text-gray-200">
-                        <Lock className="w-4 h-4 text-indigo-500" />
-                        Password
-                      </Label>
-                      <motion.div whileFocus={{ scale: 1.02 }} transition={{ type: "spring", stiffness: 400 }}>
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="password" className="text-sm font-medium text-gray-700 dark:text-gray-200">
+                          Password
+                        </Label>
+                        {isLogin && (
+                          <button
+                            type="button"
+                            onClick={handleForgotPassword}
+                            className="text-xs text-pink-600 hover:text-pink-700 dark:text-pink-400 hover:underline"
+                          >
+                            Forgot password?
+                          </button>
+                        )}
+                      </div>
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                         <Input
                           id="password"
-                          type="password"
-                          placeholder="Enter your password"
+                          type={showPassword ? "text" : "password"}
+                          placeholder="••••••••"
                           value={password}
                           onChange={(e) => setPassword(e.target.value)}
-                          className="transition-all duration-300 focus:ring-2 focus:ring-indigo-400/50 border-gray-200 dark:border-gray-700"
+                          className="pl-10 pr-10 h-11 bg-gray-50/50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-indigo-500/20 transition-all duration-300"
                           required
                           minLength={6}
                         />
-                      </motion.div>
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                        >
+                          {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
                     </div>
 
                     <motion.div
@@ -240,19 +283,19 @@ export default function Auth() {
                     >
                       <Button
                         type="submit"
-                        className="w-full bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 group"
+                        className="w-full h-11 bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white shadow-lg hover:shadow-pink-500/25 transition-all duration-300 rounded-xl"
                         disabled={loading}
                       >
                         {loading ? (
                           <motion.div
                             animate={{ rotate: 360 }}
                             transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                            className="w-4 h-4 border-2 border-white border-t-transparent rounded-full"
+                            className="w-5 h-5 border-2 border-white border-t-transparent rounded-full"
                           />
                         ) : (
-                          <span className="flex items-center gap-2">
-                            {isLogin ? 'Sign In' : 'Sign Up'}
-                            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-200" />
+                          <span className="flex items-center justify-center gap-2 font-medium">
+                            {isLogin ? 'Sign In' : 'Create Account'}
+                            <ArrowRight className="w-4 h-4" />
                           </span>
                         )}
                       </Button>
@@ -260,19 +303,47 @@ export default function Auth() {
                   </motion.form>
                 </AnimatePresence>
 
-                <div className="mt-6 text-center">
-                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                    <Button
-                      variant="ghost"
-                      onClick={() => setIsLogin(!isLogin)}
-                      className="text-sm text-gray-600 dark:text-gray-300 hover:text-pink-600 dark:hover:text-pink-400 transition-colors duration-200"
-                    >
-                      {isLogin
-                        ? "Don't have an account? Sign up 🚀"
-                        : 'Already have an account? Sign in 👋'
-                      }
-                    </Button>
-                  </motion.div>
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t border-gray-200 dark:border-gray-700" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-white dark:bg-gray-900 px-2 text-gray-500">
+                      Or continue with
+                    </span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <Button
+                    variant="outline"
+                    onClick={() => handleSocialLogin('Google')}
+                    className="h-10 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                  >
+                    <Chrome className="mr-2 h-4 w-4" />
+                    Google
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => handleSocialLogin('GitHub')}
+                    className="h-10 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                  >
+                    <Github className="mr-2 h-4 w-4" />
+                    GitHub
+                  </Button>
+                </div>
+
+                <div className="text-center pt-2">
+                  <Button
+                    variant="ghost"
+                    onClick={() => setIsLogin(!isLogin)}
+                    className="text-sm text-gray-600 dark:text-gray-300 hover:text-pink-600 dark:hover:text-pink-400 transition-colors duration-200"
+                  >
+                    {isLogin
+                      ? "Don't have an account? Sign up"
+                      : 'Already have an account? Sign in'
+                    }
+                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -285,9 +356,9 @@ export default function Auth() {
             className="text-xs text-center text-gray-500 dark:text-gray-400 px-4"
           >
             By continuing, you agree to our{' '}
-            <span className="text-pink-500 hover:underline cursor-pointer">Terms of Service</span>
+            <button className="text-pink-500 hover:underline cursor-pointer">Terms of Service</button>
             {' '}and{' '}
-            <span className="text-purple-500 hover:underline cursor-pointer">Privacy Policy</span>
+            <button className="text-purple-500 hover:underline cursor-pointer">Privacy Policy</button>
           </motion.p>
         </motion.div>
       </div>
