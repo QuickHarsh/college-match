@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
-import { Heart, User, GraduationCap, Sparkles, X, Save } from 'lucide-react';
+import { Heart, User, GraduationCap, Sparkles, X, Save, Image as ImageIcon, Plus, Trash2, Lock, Globe, Loader2 } from 'lucide-react';
 import { useCallback } from 'react';
 import ProfilePhotoUploader from '@/components/ProfilePhotoUploader';
 import MagnetLines from '@/reactbits/MagnetLines';
@@ -34,6 +34,12 @@ const BRANCHES = [
   'Physics', 'Chemistry', 'Biology', 'Medicine', 'Law', 'Arts', 'Other'
 ];
 
+interface GalleryImage {
+  id: string;
+  image_url: string;
+  is_private: boolean;
+}
+
 export default function ProfileSetup() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -49,6 +55,89 @@ export default function ProfileSetup() {
     profile_image_url: ''
   });
   const [connectionsCount, setConnectionsCount] = useState<number>(0);
+  const [gallery, setGallery] = useState<GalleryImage[]>([]);
+  const [uploadingGallery, setUploadingGallery] = useState(false);
+
+  const fetchGallery = useCallback(async () => {
+    if (!user) return;
+    const sb: any = supabase;
+    const { data } = await sb
+      .from('user_gallery')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
+    if (data) setGallery(data);
+  }, [user]);
+
+  const handleGalleryUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0 || !user) return;
+    setUploadingGallery(true);
+    try {
+      const sb: any = supabase;
+      const files = Array.from(e.target.files);
+      for (const file of files) {
+        const fileExt = file.name.split('.').pop();
+        const filePath = `${user.id}/${Math.random()}.${fileExt}`;
+        const { error: uploadError } = await sb.storage
+          .from('gallery-images')
+          .upload(filePath, file);
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = sb.storage
+          .from('gallery-images')
+          .getPublicUrl(filePath);
+
+        const { error: dbError } = await sb
+          .from('user_gallery')
+          .insert({ user_id: user.id, image_url: publicUrl });
+        if (dbError) throw dbError;
+      }
+      await fetchGallery();
+      toast({ title: "Photos added", description: "Your gallery has been updated." });
+    } catch (error) {
+      console.error(error);
+      toast({ title: "Upload failed", description: "Could not upload photos.", variant: "destructive" });
+    } finally {
+      setUploadingGallery(false);
+    }
+  };
+
+  const handleDeleteImage = async (id: string, url: string) => {
+    try {
+      const sb: any = supabase;
+      // Optimistic update
+      setGallery(prev => prev.filter(img => img.id !== id));
+
+      const { error } = await sb.from('user_gallery').delete().eq('id', id);
+      if (error) throw error;
+
+      // Try to delete from storage (optional, best effort)
+      const path = url.split('/').pop(); // simplistic path extraction
+      if (path && user) {
+        await sb.storage.from('gallery-images').remove([`${user.id}/${path}`]);
+      }
+    } catch (error) {
+      console.error(error);
+      toast({ title: "Delete failed", description: "Could not delete photo.", variant: "destructive" });
+      fetchGallery(); // Revert
+    }
+  };
+
+  const handleTogglePrivacy = async (id: string, currentStatus: boolean) => {
+    try {
+      const sb: any = supabase;
+      setGallery(prev => prev.map(img => img.id === id ? { ...img, is_private: !currentStatus } : img));
+      const { error } = await sb
+        .from('user_gallery')
+        .update({ is_private: !currentStatus })
+        .eq('id', id);
+      if (error) throw error;
+    } catch (error) {
+      console.error(error);
+      toast({ title: "Update failed", description: "Could not update privacy.", variant: "destructive" });
+      fetchGallery(); // Revert
+    }
+  };
 
   const loadProfile = useCallback(async () => {
     if (!user) return;
@@ -79,6 +168,7 @@ export default function ProfileSetup() {
     }
     // Load existing profile if it exists
     loadProfile();
+    fetchGallery();
     // Load connections count (head + count)
     (async () => {
       try {
@@ -329,6 +419,71 @@ export default function ProfileSetup() {
                         </Badge>
                       );
                     })}
+                  </div>
+                </div>
+
+                {/* Gallery Section */}
+                <div className="space-y-4 pt-6 border-t border-border/50">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-lg font-semibold text-primary">
+                      <ImageIcon className="h-5 w-5" />
+                      My Gallery
+                    </div>
+                    <div className="relative">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                        onChange={handleGalleryUpload}
+                        disabled={uploadingGallery}
+                      />
+                      <Button type="button" variant="outline" size="sm" disabled={uploadingGallery}>
+                        {uploadingGallery ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Plus className="h-4 w-4 mr-2" />}
+                        Add Photos
+                      </Button>
+                    </div>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Upload photos to showcase your personality. Toggle the lock icon to make photos private (visible only to matches).
+                  </p>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                    {gallery.map((img) => (
+                      <div key={img.id} className="relative group aspect-square rounded-xl overflow-hidden border border-border/50 bg-muted/30">
+                        <img src={img.image_url} alt="Gallery" className="w-full h-full object-cover transition-transform group-hover:scale-105" />
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            size="icon"
+                            className="h-8 w-8 rounded-full bg-white/20 hover:bg-white/40 backdrop-blur-sm text-white border-none"
+                            onClick={() => handleTogglePrivacy(img.id, img.is_private)}
+                          >
+                            {img.is_private ? <Lock className="h-4 w-4" /> : <Globe className="h-4 w-4" />}
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="icon"
+                            className="h-8 w-8 rounded-full"
+                            onClick={() => handleDeleteImage(img.id, img.image_url)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        {img.is_private && (
+                          <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-sm p-1 rounded-full">
+                            <Lock className="h-3 w-3 text-white" />
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                    {gallery.length === 0 && (
+                      <div className="col-span-full py-8 text-center text-muted-foreground border-2 border-dashed border-muted rounded-xl">
+                        No photos yet. Add some to stand out!
+                      </div>
+                    )}
                   </div>
                 </div>
 

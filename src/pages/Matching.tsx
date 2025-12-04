@@ -8,6 +8,8 @@ import { fetchCandidates, likeUser, type Candidate } from '@/lib/matching';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 
+import ProfileDetailsDialog from '@/components/ProfileDetailsDialog';
+
 export default function Matching() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
@@ -23,6 +25,7 @@ export default function Matching() {
   const scale = useTransform(x, [-200, 0, 200], [0.95, 1, 0.95]);
 
   const [matchCelebration, setMatchCelebration] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -198,7 +201,7 @@ export default function Matching() {
                 }
               }}
             >
-              <div className="relative w-full h-full bg-white dark:bg-gray-900 rounded-3xl shadow-2xl overflow-hidden border border-gray-200 dark:border-gray-800">
+              <div className="relative w-full h-full bg-white dark:bg-gray-900 rounded-3xl shadow-2xl overflow-hidden border border-gray-200 dark:border-gray-800" onClick={() => setShowProfile(true)}>
                 {/* Image / Gradient Background */}
                 <div className="absolute inset-0 bg-gradient-to-br from-pink-400 via-purple-500 to-indigo-600">
                   {current.profile_image_url ? (
@@ -296,6 +299,7 @@ export default function Matching() {
         <motion.button
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
+          onClick={() => setShowProfile(true)}
           className="w-10 h-10 rounded-full bg-white dark:bg-gray-800 shadow-md flex items-center justify-center text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors border border-gray-200 dark:border-gray-700"
         >
           <Info className="w-5 h-5" />
@@ -369,6 +373,13 @@ export default function Matching() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <ProfileDetailsDialog
+        isOpen={showProfile}
+        onOpenChange={setShowProfile}
+        candidate={current}
+        onLike={handleLike}
+      />
     </div>
   );
 }

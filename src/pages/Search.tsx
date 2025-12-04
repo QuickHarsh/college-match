@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -7,12 +6,13 @@ import { Input } from '@/components/ui/input';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { likeUser, type Candidate } from '@/lib/matching';
-import { ThumbsUp, Sparkles, Search as SearchIcon } from 'lucide-react';
+import { ThumbsUp, Sparkles, Search as SearchIcon, User } from 'lucide-react';
 import { motion } from 'framer-motion';
 import ShinyText from '@/reactbits/ShinyText';
 import SpotlightCard from '@/reactbits/SpotlightCard';
 import StarBorder from '@/reactbits/StarBorder';
 import PixelTrail from '@/reactbits/PixelTrail';
+import ProfileDetailsDialog from '@/components/ProfileDetailsDialog';
 
 export default function Search() {
   const { user, loading } = useAuth();
@@ -20,6 +20,8 @@ export default function Search() {
   const [query, setQuery] = useState('');
   const [loadingResults, setLoadingResults] = useState(false);
   const [results, setResults] = useState<Candidate[]>([]);
+  const [selectedProfile, setSelectedProfile] = useState<Candidate | null>(null);
+  const [showProfile, setShowProfile] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) navigate('/auth');
@@ -67,10 +69,9 @@ export default function Search() {
     try {
       const res = await likeUser(user.id, targetId);
       if (res.isMutual) {
-        toast({ title: "It's a match!", description: 'Starting a video call...' });
-        setTimeout(() => navigate('/match/video'), 700);
+        toast({ title: 'Connection Request Sent', description: 'Waiting for approval.' });
       } else {
-        toast({ title: 'Like sent', description: 'We\'ll notify you if it\'s a match.' });
+        toast({ title: 'Connection Request Sent', description: 'Waiting for approval.' });
       }
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Failed to like user';
@@ -145,7 +146,7 @@ export default function Search() {
             >
               <SpotlightCard className="h-full bg-card/50 backdrop-blur-sm border-white/10" spotlightColor="rgba(139, 92, 246, 0.15)">
                 <div className="p-0 h-full flex flex-col">
-                  <div className="aspect-[4/3] w-full bg-muted overflow-hidden relative">
+                  <div className="aspect-[4/3] w-full bg-muted overflow-hidden relative group cursor-pointer" onClick={() => { setSelectedProfile(p); setShowProfile(true); }}>
                     {p.profile_image_url ? (
                       <img src={p.profile_image_url} alt={p.full_name} className="h-full w-full object-cover transition-transform duration-500 hover:scale-110" />
                     ) : (
@@ -185,8 +186,11 @@ export default function Search() {
                       </div>
                     )}
 
-                    <div className="mt-auto pt-2">
-                      <Button className="w-full rounded-xl font-semibold shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all" onClick={() => handleLike(p.user_id)}>
+                    <div className="mt-auto pt-2 flex gap-2">
+                      <Button variant="outline" size="icon" className="rounded-xl" onClick={() => { setSelectedProfile(p); setShowProfile(true); }}>
+                        <User className="h-4 w-4" />
+                      </Button>
+                      <Button className="flex-1 rounded-xl font-semibold shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all" onClick={() => handleLike(p.user_id)}>
                         <ThumbsUp className="h-4 w-4 mr-2" /> Connect
                       </Button>
                     </div>
@@ -197,6 +201,13 @@ export default function Search() {
           ))}
         </div>
       </div>
+
+      <ProfileDetailsDialog
+        isOpen={showProfile}
+        onOpenChange={setShowProfile}
+        candidate={selectedProfile}
+        onLike={() => selectedProfile && handleLike(selectedProfile.user_id)}
+      />
     </div>
   );
 }
