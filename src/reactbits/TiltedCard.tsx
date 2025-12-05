@@ -123,7 +123,7 @@ export default function TiltedCard({
             {/* Tooltip / Caption */}
             {showTooltip && captionText && (
                 <motion.div
-                    className="absolute left-4 bottom-4 z-30 rounded-lg bg-white/10 px-3 py-2 text-xs text-white backdrop-blur-md border border-white/10 shadow-lg"
+                    className="absolute left-4 bottom-4 z-30 rounded-lg bg-white/80 dark:bg-white/10 px-3 py-2 text-xs text-gray-900 dark:text-white backdrop-blur-md border border-black/5 dark:border-white/10 shadow-lg"
                     style={{
                         x,
                         y,

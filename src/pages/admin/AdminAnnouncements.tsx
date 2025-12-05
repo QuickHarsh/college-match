@@ -59,9 +59,7 @@ export default function AdminAnnouncements() {
       setTogglingId(id);
       const sb: any = supabase as any;
       if (next) {
-        // Ensure only one active at a time: deactivate others first
-        const { error: e1 } = await sb.from('announcements').update({ active: false }).neq('id', id);
-        if (e1) throw e1;
+        // Allow multiple active announcements
       }
       const { error } = await sb.from('announcements').update({ active: next }).eq('id', id);
       if (error) throw error;
@@ -118,7 +116,7 @@ export default function AdminAnnouncements() {
                 />
                 <Button onClick={createAnnouncement} disabled={!message.trim() || saving}>{saving ? 'Posting…' : 'Post'}</Button>
               </div>
-              <p className="text-xs text-muted-foreground mt-2">Tip: Keep it short. Only one or two lines appear on the home banner.</p>
+              <p className="text-xs text-muted-foreground mt-2">Tip: You can have multiple active announcements. They will rotate on the home page.</p>
             </CardContent>
           </Card>
 

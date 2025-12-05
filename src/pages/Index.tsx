@@ -7,7 +7,7 @@ import { Users, Calendar, MessageCircle, Sparkles, ThumbsUp, GraduationCap, Shie
 import { useProfile } from '@/hooks/useProfile';
 import CarouselHero, { type Slide } from '@/components/CarouselHero';
 import { supabase } from '@/integrations/supabase/client';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import gsap from 'gsap';
 import ShinyText from '@/reactbits/ShinyText';
 import BlurText from '@/reactbits/BlurText';
@@ -29,7 +29,7 @@ const Index = () => {
   // Dynamic slides from Supabase (upcoming events + top clubs)
   const [slides, setSlides] = useState<Slide[] | null>(null);
   // Announcements banner
-  const [announcement, setAnnouncement] = useState<string | null>(null);
+  const [announcements, setAnnouncements] = useState<Array<{ id: string; message: string }>>([]);
   // Suggested profiles (same college vibe)
   const [suggested, setSuggested] = useState<Array<{ id: string; full_name: string | null; profile_image_url: string | null; bio?: string | null }>>([]);
   // Today in campus (events + clubs)
@@ -39,6 +39,17 @@ const Index = () => {
   const [leaderboardPreview, setLeaderboardPreview] = useState<Array<{ user_id: string; full_name: string; match_count: number; profile_image_url: string | null }>>([]);
   // User Stats
   const [userStats, setUserStats] = useState<{ matches: number; likes: number }>({ matches: 0, likes: 0 });
+
+  // Announcement rotation
+  const [index, setIndex] = useState(0);
+
+  useEffect(() => {
+    if (announcements.length <= 1) return;
+    const interval = setInterval(() => {
+      setIndex((prev) => (prev + 1) % announcements.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [announcements]);
 
   useEffect(() => {
     const load = async () => {
@@ -134,12 +145,11 @@ const Index = () => {
         try {
           const { data: ann } = await sb
             .from('announcements')
-            .select('message, active')
+            .select('id, message, active')
             .eq('active', true)
-            .order('created_at', { ascending: false })
-            .limit(1);
-          if (ann && ann.length > 0) setAnnouncement(ann[0].message as string);
-        } catch (_ignored) { setAnnouncement(null); }
+            .order('created_at', { ascending: false });
+          if (ann) setAnnouncements(ann as any);
+        } catch (_ignored) { setAnnouncements([]); }
 
         // Suggested profiles
         try {
@@ -342,11 +352,43 @@ const Index = () => {
         </motion.div>
 
         {/* Announcements banner (admin broadcast) */}
-        {announcement && (
-          <div className="mb-8 rounded-lg border p-4 md:p-5 bg-secondary/10 flex items-center justify-between max-w-5xl mx-auto">
-            <div className="text-left">
-              <div className="font-semibold flex items-center gap-2"><Crown className="h-4 w-4 text-primary" /> Announcement</div>
-              <div className="text-sm text-muted-foreground">{announcement}</div>
+        {announcements.length > 0 && (
+          <div className="mb-8 max-w-5xl mx-auto">
+            <div className="relative overflow-hidden rounded-xl border bg-gradient-to-r from-pink-500/10 via-purple-500/10 to-indigo-500/10 p-1">
+              <div className="absolute inset-0 bg-white/40 dark:bg-black/40 backdrop-blur-sm" />
+              <div className="relative flex items-center gap-4 p-3 md:p-4">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-pink-500 to-purple-600 text-white shadow-lg">
+                  <Crown className="h-5 w-5 animate-pulse" />
+                </div>
+                <div className="flex-1 overflow-hidden">
+                  <div className="relative h-6 w-full">
+                    <AnimatePresence mode="wait">
+                      <motion.div
+                        key={index} // We need an index state for rotation
+                        initial={{ y: 20, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        exit={{ y: -20, opacity: 0 }}
+                        transition={{ duration: 0.5 }}
+                        className="absolute inset-0 flex items-center"
+                      >
+                        <span className="font-medium text-foreground md:text-lg truncate">
+                          {announcements[index]?.message}
+                        </span>
+                      </motion.div>
+                    </AnimatePresence>
+                  </div>
+                </div>
+                {announcements.length > 1 && (
+                  <div className="flex gap-1">
+                    {announcements.map((_, i) => (
+                      <div
+                        key={i}
+                        className={`h-1.5 w-1.5 rounded-full transition-colors ${i === index ? 'bg-primary' : 'bg-primary/20'}`}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}
