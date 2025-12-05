@@ -55,37 +55,39 @@ const Index = () => {
     const load = async () => {
       try {
         const sb: any = supabase as any;
-        // Upcoming events: starting soon
+        // Upcoming events: starting soon (prioritize hot events)
         const { data: ev, error: eErr } = await sb
           .from('events')
-          .select('id, title, description, banner_image_url, start_time')
+          .select('id, title, description, banner_image_url, start_time, is_hot')
           .gt('start_time', new Date().toISOString())
+          .order('is_hot', { ascending: false }) // Hot events first
           .order('start_time', { ascending: true })
-          .limit(2);
+          .limit(3);
         if (eErr) throw eErr;
 
         // Top club (fallback to any club if no ranking)
         const { data: clubs, error: cErr } = await sb
           .from('interest_clubs')
-          .select('id, name, description, icon, category')
+          .select('id, name, description, icon, banner_image_url, category')
           .order('name')
           .limit(1);
         if (cErr) throw cErr;
 
         const dynamicSlides: Slide[] = [];
-        (ev || []).forEach((row: { id: string; title: string; description: string | null; banner_image_url: string | null }) => {
+        (ev || []).forEach((row: { id: string; title: string; description: string | null; banner_image_url: string | null; is_hot: boolean }) => {
           dynamicSlides.push({
             id: `event-${row.id}`,
-            tag: 'Upcoming Event',
+            tag: row.is_hot ? '🔥 Hot Event' : 'Upcoming Event',
             title: row.title || 'Campus Event',
             subtitle: row.description || 'Happening soon — don’t miss out!',
             cta: 'View event',
             to: '/events',
             imageUrl: row.banner_image_url || undefined,
+            accent: row.is_hot ? 'from-orange-500/60 to-red-600/60' : undefined,
           });
         });
         if ((clubs || []).length > 0) {
-          const c = clubs[0] as { id: string; name: string; description: string | null };
+          const c = clubs[0] as { id: string; name: string; description: string | null; banner_image_url: string | null };
           dynamicSlides.push({
             id: `club-${c.id}`,
             tag: 'Top Club',
@@ -93,7 +95,7 @@ const Index = () => {
             subtitle: c.description || 'Meet people who love what you love.',
             cta: 'Explore clubs',
             to: '/clubs',
-            imageUrl: undefined,
+            imageUrl: c.banner_image_url || undefined,
             accent: 'from-primary/20 to-secondary/20',
           });
         }

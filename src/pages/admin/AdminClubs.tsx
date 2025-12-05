@@ -15,6 +15,7 @@ interface ClubRow {
   name: string;
   description: string | null;
   icon: string | null;
+  banner_image_url: string | null;
   category: string | null;
 }
 
@@ -33,7 +34,7 @@ export default function AdminClubs() {
       const sb: any = supabase as any;
       const { data, error } = await sb
         .from('interest_clubs')
-        .select('id, name, description, icon, category')
+        .select('id, name, description, icon, banner_image_url, category')
         .order('name', { ascending: true });
       if (error) throw error;
       setRows((data as ClubRow[]) || []);
@@ -58,6 +59,7 @@ export default function AdminClubs() {
         name: form.name,
         description: form.description || null,
         icon: form.icon || null,
+        banner_image_url: form.banner_image_url || null,
         category: form.category || null,
       } as any;
       const sb: any = supabase as any;
@@ -106,6 +108,37 @@ export default function AdminClubs() {
     setForm({ ...row });
   };
 
+  const [uploading, setUploading] = useState(false);
+
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>, field: 'icon' | 'banner_image_url') => {
+    if (!e.target.files || e.target.files.length === 0) return;
+    setUploading(true);
+    try {
+      const file = e.target.files[0];
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random()}.${fileExt}`;
+      const filePath = `${fileName}`;
+
+      const sb: any = supabase as any;
+      const { error: uploadError } = await sb.storage
+        .from('banners')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = sb.storage
+        .from('banners')
+        .getPublicUrl(filePath);
+
+      setForm(f => ({ ...f, [field]: publicUrl }));
+      toast({ title: 'Uploaded', description: 'Image uploaded successfully.' });
+    } catch (error: any) {
+      toast({ title: 'Upload failed', description: error.message, variant: 'destructive' });
+    } finally {
+      setUploading(false);
+    }
+  };
+
   return (
     <AdminGuard>
       <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5 pt-20 p-4">
@@ -137,8 +170,18 @@ export default function AdminClubs() {
                   <Textarea value={form.description || ''} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} />
                 </div>
                 <div className="md:col-span-2">
-                  <Label>Icon (emoji or URL)</Label>
-                  <Input value={form.icon || ''} onChange={(e) => setForm((f) => ({ ...f, icon: e.target.value }))} placeholder="e.g., 🎮 or https://..." />
+                  <Label>Club DP (Required)</Label>
+                  <div className="flex gap-2">
+                    <Input value={form.icon || ''} onChange={(e) => setForm((f) => ({ ...f, icon: e.target.value }))} placeholder="Image URL or Emoji" />
+                    <Input type="file" className="w-[100px]" onChange={(e) => handleUpload(e, 'icon')} disabled={uploading} />
+                  </div>
+                </div>
+                <div className="md:col-span-2">
+                  <Label>Banner Image (Optional - for Home Carousel)</Label>
+                  <div className="flex gap-2">
+                    <Input value={form.banner_image_url || ''} onChange={(e) => setForm((f) => ({ ...f, banner_image_url: e.target.value }))} placeholder="https://..." />
+                    <Input type="file" className="w-[100px]" onChange={(e) => handleUpload(e, 'banner_image_url')} disabled={uploading} />
+                  </div>
                 </div>
                 <div className="md:col-span-2 flex gap-2">
                   <Button onClick={submit} disabled={saving}>{saving ? 'Saving…' : (editing ? 'Update' : 'Create')}</Button>

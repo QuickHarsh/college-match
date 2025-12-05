@@ -18,6 +18,7 @@ interface EventRow {
   banner_image_url: string | null;
   start_time: string | null;
   end_time: string | null;
+  is_hot: boolean;
 }
 
 export default function AdminEvents() {
@@ -75,6 +76,7 @@ export default function AdminEvents() {
         start_time: formatToISO(form.start_time),
         end_time: formatToISO(form.end_time),
         event_date: eventDate,
+        is_hot: form.is_hot || false,
       } as any;
 
       console.log('Submitting payload:', payload);
@@ -130,6 +132,37 @@ export default function AdminEvents() {
     setForm({ ...row });
   };
 
+  const [uploading, setUploading] = useState(false);
+
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+    setUploading(true);
+    try {
+      const file = e.target.files[0];
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random()}.${fileExt}`;
+      const filePath = `${fileName}`;
+
+      const sb: any = supabase as any;
+      const { error: uploadError } = await sb.storage
+        .from('banners')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = sb.storage
+        .from('banners')
+        .getPublicUrl(filePath);
+
+      setForm(f => ({ ...f, banner_image_url: publicUrl }));
+      toast({ title: 'Uploaded', description: 'Image uploaded successfully.' });
+    } catch (error: any) {
+      toast({ title: 'Upload failed', description: error.message, variant: 'destructive' });
+    } finally {
+      setUploading(false);
+    }
+  };
+
   return (
     <AdminGuard>
       <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5 pt-20 p-4">
@@ -163,7 +196,10 @@ export default function AdminEvents() {
                 </div>
                 <div>
                   <Label>Banner Image URL</Label>
-                  <Input value={form.banner_image_url || ''} onChange={(e) => setForm((f) => ({ ...f, banner_image_url: e.target.value }))} placeholder="https://..." />
+                  <div className="flex gap-2">
+                    <Input value={form.banner_image_url || ''} onChange={(e) => setForm((f) => ({ ...f, banner_image_url: e.target.value }))} placeholder="https://..." />
+                    <Input type="file" className="w-[100px]" onChange={handleUpload} disabled={uploading} />
+                  </div>
                 </div>
                 <div>
                   <Label>Start Time</Label>
@@ -172,6 +208,16 @@ export default function AdminEvents() {
                 <div>
                   <Label>End Time</Label>
                   <Input type="datetime-local" value={form.end_time || ''} onChange={(e) => setForm((f) => ({ ...f, end_time: e.target.value }))} />
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="is_hot"
+                    className="h-4 w-4 rounded border-gray-300"
+                    checked={form.is_hot || false}
+                    onChange={(e) => setForm((f) => ({ ...f, is_hot: e.target.checked }))}
+                  />
+                  <Label htmlFor="is_hot" className="cursor-pointer">Hot Event (Show in Home Carousel)</Label>
                 </div>
                 <div className="md:col-span-2 flex gap-2">
                   <Button onClick={submit} disabled={saving}>{saving ? 'Saving…' : (editing ? 'Update' : 'Create')}</Button>
