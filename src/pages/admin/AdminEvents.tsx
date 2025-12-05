@@ -36,7 +36,7 @@ export default function AdminEvents() {
       const sb: any = supabase as any;
       const { data, error } = await sb
         .from('events')
-        .select('id, title, description, location, banner_image_url, start_time, end_time')
+        .select('id, title, description, location, banner_image_url, start_time, end_time, is_hot')
         .order('start_time', { ascending: true });
       if (error) throw error;
       setRows((data as EventRow[]) || []);
@@ -235,7 +235,10 @@ export default function AdminEvents() {
               <Card key={row.id}>
                 <CardContent className="p-4 flex items-center justify-between">
                   <div>
-                    <div className="font-medium">{row.title}</div>
+                    <div className="font-medium flex items-center gap-2">
+                      {row.title}
+                      {row.is_hot && <span className="bg-orange-100 text-orange-600 text-[10px] px-1.5 py-0.5 rounded-full font-bold border border-orange-200">🔥 Hot</span>}
+                    </div>
                     <div className="text-xs text-muted-foreground">{row.location || 'TBD'} • {row.start_time ? new Date(row.start_time).toLocaleString() : 'n/a'}</div>
                   </div>
                   <div className="flex gap-2">
