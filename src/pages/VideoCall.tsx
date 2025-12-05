@@ -63,7 +63,12 @@ export default function VideoCall() {
         roomId = room?.id || null;
       }
 
-      if (!roomId) return;
+      if (!roomId) {
+        console.error("No room ID found");
+        toast.error("Could not find a valid video room.");
+        return;
+      }
+      console.log("Joining room:", roomId);
       stateRef.current.roomId = roomId;
 
       // Media
@@ -71,8 +76,9 @@ export default function VideoCall() {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
         localStreamRef.current = stream;
         if (localVideoRef.current) localVideoRef.current.srcObject = stream;
-      } catch {
-        toast.error("Camera/Microphone access denied");
+      } catch (err) {
+        console.error("Media access error:", err);
+        toast.error("Camera/Microphone access denied. Please check permissions.");
         return;
       }
 
@@ -100,6 +106,7 @@ export default function VideoCall() {
       };
 
       pc.onconnectionstatechange = () => {
+        console.log("PC Connection State:", pc.connectionState);
         if (pc.connectionState === 'connected') {
           setIsConnected(true);
           toast.success("Connected!");
@@ -116,17 +123,35 @@ export default function VideoCall() {
       let initiator = false;
       channel.on('presence', { event: 'sync' }, () => {
         const clients = Object.keys(channel.presenceState());
+        console.log("Presence sync:", clients);
         initiator = clients.length === 1;
         stateRef.current.initiator = initiator;
       });
 
       await channel.subscribe(async (status) => {
+        console.log("Subscription status:", status);
+        if (status === 'SUBSCRIBED') {
+          await channel.track({ user_id: user.id });
+        } else if (status === 'CLOSED') {
+          console.error("Channel closed unexpectedly");
+          toast.error("Connection closed. Retrying...");
+          // Optional: logic to rejoin
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error("Channel error");
+          toast.error("Connection error. Please refresh.");
+        }
+
         if (status !== 'SUBSCRIBED') return;
-        await channel.track({ user_id: user.id });
 
         channel.on('broadcast', { event: 'offer' }, async (payload) => {
+          console.log("Received offer");
           if (!pc) return;
           try {
+            if (pc.signalingState !== "stable") {
+              // If we are already negotiating, we might need to ignore or rollback.
+              // For simplicity in this demo, we proceed but log warning.
+              console.warn("Received offer while not stable:", pc.signalingState);
+            }
             await pc.setRemoteDescription(new RTCSessionDescription(payload.payload));
             const answer = await pc.createAnswer();
             await pc.setLocalDescription(answer);
@@ -134,16 +159,21 @@ export default function VideoCall() {
           } catch (e) { console.error('offer handling error', e); }
         });
         channel.on('broadcast', { event: 'answer' }, async (payload) => {
+          console.log("Received answer");
           if (!pc) return;
-          if (!pc.currentRemoteDescription) {
-            await pc.setRemoteDescription(new RTCSessionDescription(payload.payload));
-          }
+          try {
+            if (!pc.currentRemoteDescription) {
+              await pc.setRemoteDescription(new RTCSessionDescription(payload.payload));
+            }
+          } catch (e) { console.error('answer handling error', e); }
         });
         channel.on('broadcast', { event: 'ice' }, async (payload) => {
+          // console.log("Received ICE candidate");
           if (!pc) return;
           try { await pc.addIceCandidate(new RTCIceCandidate(payload.payload)); } catch (e) { console.error('ICE add error', e); }
         });
         channel.on('broadcast', { event: 'need_offer' }, async () => {
+          console.log("Received need_offer");
           try {
             if (stateRef.current.initiator && pc.signalingState === 'stable') {
               const offer = await pc.createOffer();
@@ -156,6 +186,7 @@ export default function VideoCall() {
 
         // Negotiation
         pc.onnegotiationneeded = async () => {
+          console.log("Negotiation needed");
           try {
             if (stateRef.current.initiator && pc.signalingState === 'stable') {
               const offer = await pc.createOffer();
@@ -167,18 +198,21 @@ export default function VideoCall() {
 
         // If NOT initiator, ask for offer immediately after subscribing
         if (!stateRef.current.initiator) {
+          console.log("Not initiator, sending need_offer");
           channel.send({ type: 'broadcast', event: 'need_offer', payload: { roomId } });
         } else {
           // Initiator sends an initial offer shortly after join if alone
+          console.log("Initiator, waiting to send offer");
           setTimeout(async () => {
             try {
               if (pc.signalingState === 'stable' && !pc.localDescription) {
+                console.log("Sending initial offer");
                 const offer = await pc.createOffer();
                 await pc.setLocalDescription(offer);
                 channel.send({ type: 'broadcast', event: 'offer', payload: offer });
               }
             } catch (e) { console.error('initial offer error', e); }
-          }, 300);
+          }, 1000); // Increased delay slightly
         }
       });
     };
