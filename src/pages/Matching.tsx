@@ -186,7 +186,7 @@ export default function Matching() {
           {current && (
             <motion.div
               key={current.user_id}
-              className="absolute inset-0 cursor-grab active:cursor-grabbing"
+              className="absolute inset-0 cursor-grab active:cursor-grabbing touch-none"
               style={{ x, rotate, scale }}
               drag="x"
               dragConstraints={{ left: 0, right: 0 }}
