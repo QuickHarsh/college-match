@@ -2,7 +2,7 @@
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
-import { Users, ThumbsUp, MessageCircle, Calendar, Users2, Home, Search as SearchIcon, Sparkles, LogOut, User, Wallet, BrainCircuit, Info, Menu, Trophy } from 'lucide-react';
+import { Users, ThumbsUp, MessageCircle, Calendar, Users2, Home, Search as SearchIcon, Sparkles, LogOut, User, Wallet, BrainCircuit, Info, Menu, Trophy, Shield, Megaphone } from 'lucide-react';
 import { ComponentType, useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -214,6 +214,31 @@ export default function TopNav() {
                     <span>Leaderboard</span>
                   </DropdownMenuItem>
                 </DropdownMenuGroup>
+
+                {profile?.is_admin && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuGroup>
+                      <DropdownMenuLabel className="text-xs text-muted-foreground uppercase tracking-wider">Admin</DropdownMenuLabel>
+                      <DropdownMenuItem onClick={() => navigate('/admin')} className="cursor-pointer">
+                        <Shield className="mr-2 h-4 w-4 text-red-500" />
+                        <span>Dashboard</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => navigate('/admin/events')} className="cursor-pointer">
+                        <Calendar className="mr-2 h-4 w-4 text-orange-500" />
+                        <span>Manage Events</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => navigate('/admin/clubs')} className="cursor-pointer">
+                        <Users className="mr-2 h-4 w-4 text-indigo-500" />
+                        <span>Manage Clubs</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => navigate('/admin/announcements')} className="cursor-pointer">
+                        <Megaphone className="mr-2 h-4 w-4 text-blue-500" />
+                        <span>Announcements</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuGroup>
+                  </>
+                )}
 
                 <DropdownMenuSeparator />
 
