@@ -88,6 +88,53 @@ export default function Connections() {
     item.college_name?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const startCall = async (matchId: string, otherUserId: string) => {
+    if (!user) return;
+    try {
+      const sb: any = supabase;
+
+      // 1. Get or Create Room
+      let roomId;
+      const { data: room, error: rErr } = await sb
+        .from('chat_rooms')
+        .select('id')
+        .eq('match_id', matchId)
+        .maybeSingle();
+
+      if (room) {
+        roomId = room.id;
+      } else {
+        const { data: newRoom, error: nrErr } = await sb
+          .from('chat_rooms')
+          .insert({ match_id: matchId })
+          .select('id')
+          .single();
+        if (nrErr) throw nrErr;
+        roomId = newRoom.id;
+      }
+
+      // 2. Send Invite Signal
+      const channel = sb.channel(`notify-${otherUserId}`);
+      channel.subscribe((status: string) => {
+        if (status === 'SUBSCRIBED') {
+          channel.send({
+            type: 'broadcast',
+            event: 'call_invite',
+            payload: { roomId, callerId: user.id, callerName: user.user_metadata.full_name }
+          });
+
+          // 3. Navigate
+          toast.success('Calling...', { description: 'Waiting for them to join.' });
+          navigate(`/match/video?room=${roomId}`);
+        }
+      });
+
+    } catch (e) {
+      console.error(e);
+      toast.error('Failed to start call');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-cyan-50 dark:from-gray-950 dark:via-black dark:to-gray-900 pt-20 pb-20">
       <div className="max-w-6xl mx-auto p-6 space-y-8">
@@ -192,7 +239,7 @@ export default function Connections() {
                         variant="ghost"
                         size="icon"
                         className="rounded-full text-gray-400 hover:text-cyan-500 hover:bg-cyan-50 dark:hover:bg-cyan-900/20"
-                        onClick={() => navigate(`/match/video?room=${it.match_id}`)} // Simplified video link
+                        onClick={() => startCall(it.match_id, it.user_id)}
                       >
                         <Video className="w-4 h-4" />
                       </Button>

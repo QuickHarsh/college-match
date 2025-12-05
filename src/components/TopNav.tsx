@@ -18,6 +18,108 @@ import { useProfile } from '@/hooks/useProfile';
 import ThemeToggle from '@/components/ThemeToggle';
 import { supabase } from '@/integrations/supabase/client';
 
+const ProfileMenu = ({ user, profile, navigate, signOut, likesCount, connectionsCount, children, side = "bottom" }: any) => (
+  <DropdownMenu>
+    <DropdownMenuTrigger asChild>
+      {children}
+    </DropdownMenuTrigger>
+    <DropdownMenuContent side={side} align="end" className="w-64 p-2 animate-in slide-in-from-top-2 fade-in-20 duration-200">
+      <DropdownMenuLabel className="font-normal">
+        <div className="flex flex-col space-y-1">
+          <p className="text-sm font-medium leading-none">{profile?.full_name}</p>
+          <p className="text-xs leading-none text-muted-foreground">{user?.email}</p>
+        </div>
+      </DropdownMenuLabel>
+      <DropdownMenuSeparator />
+
+      <DropdownMenuGroup>
+        <DropdownMenuLabel className="text-xs text-muted-foreground uppercase tracking-wider">Social</DropdownMenuLabel>
+        <DropdownMenuItem onClick={() => navigate('/likes')} className="cursor-pointer">
+          <ThumbsUp className="mr-2 h-4 w-4 text-pink-500" />
+          <span>Likes</span>
+          {likesCount > 0 && <span className="ml-auto text-xs bg-pink-100 text-pink-600 px-1.5 py-0.5 rounded-full">{likesCount}</span>}
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => navigate('/connections')} className="cursor-pointer">
+          <Users2 className="mr-2 h-4 w-4 text-purple-500" />
+          <span>Connections</span>
+          {connectionsCount > 0 && <span className="ml-auto text-xs bg-purple-100 text-purple-600 px-1.5 py-0.5 rounded-full">{connectionsCount}</span>}
+        </DropdownMenuItem>
+      </DropdownMenuGroup>
+
+      <DropdownMenuSeparator />
+
+      <DropdownMenuGroup>
+        <DropdownMenuLabel className="text-xs text-muted-foreground uppercase tracking-wider">Community</DropdownMenuLabel>
+        <DropdownMenuItem onClick={() => navigate('/clubs')} className="cursor-pointer">
+          <Users className="mr-2 h-4 w-4 text-indigo-500" />
+          <span>Clubs</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => navigate('/groups')} className="cursor-pointer">
+          <Users2 className="mr-2 h-4 w-4 text-blue-500" />
+          <span>Groups</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => navigate('/leaderboard')} className="cursor-pointer">
+          <Trophy className="mr-2 h-4 w-4 text-yellow-500" />
+          <span>Leaderboard</span>
+        </DropdownMenuItem>
+      </DropdownMenuGroup>
+
+      {profile?.is_admin && (
+        <>
+          <DropdownMenuSeparator />
+          <DropdownMenuGroup>
+            <DropdownMenuLabel className="text-xs text-muted-foreground uppercase tracking-wider">Admin</DropdownMenuLabel>
+            <DropdownMenuItem onClick={() => navigate('/admin')} className="cursor-pointer">
+              <Shield className="mr-2 h-4 w-4 text-red-500" />
+              <span>Dashboard</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate('/admin/events')} className="cursor-pointer">
+              <Calendar className="mr-2 h-4 w-4 text-orange-500" />
+              <span>Manage Events</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate('/admin/clubs')} className="cursor-pointer">
+              <Users className="mr-2 h-4 w-4 text-indigo-500" />
+              <span>Manage Clubs</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate('/admin/announcements')} className="cursor-pointer">
+              <Megaphone className="mr-2 h-4 w-4 text-blue-500" />
+              <span>Announcements</span>
+            </DropdownMenuItem>
+          </DropdownMenuGroup>
+        </>
+      )}
+
+      <DropdownMenuSeparator />
+
+      <DropdownMenuGroup>
+        <DropdownMenuLabel className="text-xs text-muted-foreground uppercase tracking-wider">Account</DropdownMenuLabel>
+        <DropdownMenuItem onClick={() => navigate('/setup')} className="cursor-pointer">
+          <User className="mr-2 h-4 w-4" />
+          <span>Profile</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => navigate('/wallet')} className="cursor-pointer">
+          <Wallet className="mr-2 h-4 w-4" />
+          <span>Wallet</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => navigate('/quiz')} className="cursor-pointer">
+          <BrainCircuit className="mr-2 h-4 w-4" />
+          <span>Compatibility Quiz</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => navigate('/about')} className="cursor-pointer">
+          <Info className="mr-2 h-4 w-4" />
+          <span>About</span>
+        </DropdownMenuItem>
+      </DropdownMenuGroup>
+
+      <DropdownMenuSeparator />
+      <DropdownMenuItem onClick={signOut} className="text-red-600 cursor-pointer focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950/50">
+        <LogOut className="mr-2 h-4 w-4" />
+        <span>Sign out</span>
+      </DropdownMenuItem>
+    </DropdownMenuContent>
+  </DropdownMenu>
+);
+
 export default function TopNav() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
@@ -119,7 +221,7 @@ export default function TopNav() {
       transition={{ duration: 0.5, type: "spring", stiffness: 100, damping: 20 }}
       className={`fixed top-0 left-0 right-0 z-50 w-full transition-all duration-300 ${scrolled
         ? 'bg-background/80 backdrop-blur-xl border-b shadow-sm'
-        : 'bg-background/0 backdrop-blur-sm border-b border-transparent'
+        : 'bg-background/80 md:bg-background/0 backdrop-blur-sm border-b border-transparent'
         }`}
     >
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
@@ -157,118 +259,29 @@ export default function TopNav() {
               Get Started
             </Button>
           ) : (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-2 rounded-full border p-1 pr-3 hover:bg-accent hover:border-primary/50 transition-all duration-300 group">
-                  <div className="h-8 w-8 rounded-full bg-gradient-to-br from-pink-100 to-purple-100 dark:from-pink-900 dark:to-purple-900 overflow-hidden flex items-center justify-center ring-2 ring-transparent group-hover:ring-primary/20 transition-all">
-                    {profile?.profile_image_url ? (
-                      <img src={profile.profile_image_url} className="h-full w-full object-cover" alt="Profile" />
-                    ) : (
-                      <span className="text-xs font-bold text-primary">
-                        {profile?.full_name ? profile.full_name.split(' ').map(s => s[0]).slice(0, 2).join('').toUpperCase() : 'U'}
-                      </span>
-                    )}
-                  </div>
-                  <span className="hidden sm:inline text-sm font-medium max-w-[100px] truncate group-hover:text-primary transition-colors">
-                    {profile?.full_name || 'Student'}
-                  </span>
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-64 p-2 animate-in slide-in-from-top-2 fade-in-20 duration-200">
-                <DropdownMenuLabel className="font-normal">
-                  <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">{profile?.full_name}</p>
-                    <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
-                  </div>
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-
-                <DropdownMenuGroup>
-                  <DropdownMenuLabel className="text-xs text-muted-foreground uppercase tracking-wider">Social</DropdownMenuLabel>
-                  <DropdownMenuItem onClick={() => navigate('/likes')} className="cursor-pointer">
-                    <ThumbsUp className="mr-2 h-4 w-4 text-pink-500" />
-                    <span>Likes</span>
-                    {likesCount > 0 && <span className="ml-auto text-xs bg-pink-100 text-pink-600 px-1.5 py-0.5 rounded-full">{likesCount}</span>}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate('/connections')} className="cursor-pointer">
-                    <Users2 className="mr-2 h-4 w-4 text-purple-500" />
-                    <span>Connections</span>
-                    {connectionsCount > 0 && <span className="ml-auto text-xs bg-purple-100 text-purple-600 px-1.5 py-0.5 rounded-full">{connectionsCount}</span>}
-                  </DropdownMenuItem>
-                </DropdownMenuGroup>
-
-                <DropdownMenuSeparator />
-
-                <DropdownMenuGroup>
-                  <DropdownMenuLabel className="text-xs text-muted-foreground uppercase tracking-wider">Community</DropdownMenuLabel>
-                  <DropdownMenuItem onClick={() => navigate('/clubs')} className="cursor-pointer">
-                    <Users className="mr-2 h-4 w-4 text-indigo-500" />
-                    <span>Clubs</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate('/groups')} className="cursor-pointer">
-                    <Users2 className="mr-2 h-4 w-4 text-blue-500" />
-                    <span>Groups</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate('/leaderboard')} className="cursor-pointer">
-                    <Trophy className="mr-2 h-4 w-4 text-yellow-500" />
-                    <span>Leaderboard</span>
-                  </DropdownMenuItem>
-                </DropdownMenuGroup>
-
-                {profile?.is_admin && (
-                  <>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuGroup>
-                      <DropdownMenuLabel className="text-xs text-muted-foreground uppercase tracking-wider">Admin</DropdownMenuLabel>
-                      <DropdownMenuItem onClick={() => navigate('/admin')} className="cursor-pointer">
-                        <Shield className="mr-2 h-4 w-4 text-red-500" />
-                        <span>Dashboard</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => navigate('/admin/events')} className="cursor-pointer">
-                        <Calendar className="mr-2 h-4 w-4 text-orange-500" />
-                        <span>Manage Events</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => navigate('/admin/clubs')} className="cursor-pointer">
-                        <Users className="mr-2 h-4 w-4 text-indigo-500" />
-                        <span>Manage Clubs</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => navigate('/admin/announcements')} className="cursor-pointer">
-                        <Megaphone className="mr-2 h-4 w-4 text-blue-500" />
-                        <span>Announcements</span>
-                      </DropdownMenuItem>
-                    </DropdownMenuGroup>
-                  </>
-                )}
-
-                <DropdownMenuSeparator />
-
-                <DropdownMenuGroup>
-                  <DropdownMenuLabel className="text-xs text-muted-foreground uppercase tracking-wider">Account</DropdownMenuLabel>
-                  <DropdownMenuItem onClick={() => navigate('/setup')} className="cursor-pointer">
-                    <User className="mr-2 h-4 w-4" />
-                    <span>Profile</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate('/wallet')} className="cursor-pointer">
-                    <Wallet className="mr-2 h-4 w-4" />
-                    <span>Wallet</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate('/quiz')} className="cursor-pointer">
-                    <BrainCircuit className="mr-2 h-4 w-4" />
-                    <span>Compatibility Quiz</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate('/about')} className="cursor-pointer">
-                    <Info className="mr-2 h-4 w-4" />
-                    <span>About</span>
-                  </DropdownMenuItem>
-                </DropdownMenuGroup>
-
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={signOut} className="text-red-600 cursor-pointer focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950/50">
-                  <LogOut className="mr-2 h-4 w-4" />
-                  <span>Sign out</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <ProfileMenu
+              user={user}
+              profile={profile}
+              navigate={navigate}
+              signOut={signOut}
+              likesCount={likesCount}
+              connectionsCount={connectionsCount}
+            >
+              <button className="flex items-center gap-2 rounded-full border p-1 pr-3 hover:bg-accent hover:border-primary/50 transition-all duration-300 group">
+                <div className="h-8 w-8 rounded-full bg-gradient-to-br from-pink-100 to-purple-100 dark:from-pink-900 dark:to-purple-900 overflow-hidden flex items-center justify-center ring-2 ring-transparent group-hover:ring-primary/20 transition-all">
+                  {profile?.profile_image_url ? (
+                    <img src={profile.profile_image_url} className="h-full w-full object-cover" alt="Profile" />
+                  ) : (
+                    <span className="text-xs font-bold text-primary">
+                      {profile?.full_name ? profile.full_name.split(' ').map(s => s[0]).slice(0, 2).join('').toUpperCase() : 'U'}
+                    </span>
+                  )}
+                </div>
+                <span className="hidden sm:inline text-sm font-medium max-w-[100px] truncate group-hover:text-primary transition-colors">
+                  {profile?.full_name || 'Student'}
+                </span>
+              </button>
+            </ProfileMenu>
           )}
         </div>
       </div>
@@ -284,11 +297,11 @@ export default function TopNav() {
             <span className="text-[10px] font-medium">Match</span>
           </button>
           <button
-            className={`flex flex-col items-center justify-center gap-1 p-2 rounded-xl transition-colors ${location.pathname === '/search' ? 'text-primary' : 'text-muted-foreground'}`}
-            onClick={() => { if (!user) navigate('/auth'); else navigate('/search'); }}
+            className={`flex flex-col items-center justify-center gap-1 p-2 rounded-xl transition-colors ${location.pathname === '/events' ? 'text-primary' : 'text-muted-foreground'}`}
+            onClick={() => { if (!user) navigate('/auth'); else navigate('/events'); }}
           >
-            <SearchIcon className="h-5 w-5" />
-            <span className="text-[10px] font-medium">Search</span>
+            <Calendar className="h-5 w-5" />
+            <span className="text-[10px] font-medium">Events</span>
           </button>
           <button
             className="flex flex-col items-center justify-center -mt-6"
@@ -305,13 +318,41 @@ export default function TopNav() {
             <MessageCircle className="h-5 w-5" />
             <span className="text-[10px] font-medium">Chats</span>
           </button>
-          <button
-            className={`flex flex-col items-center justify-center gap-1 p-2 rounded-xl transition-colors ${location.pathname === '/events' ? 'text-primary' : 'text-muted-foreground'}`}
-            onClick={() => { if (!user) navigate('/auth'); else navigate('/events'); }}
-          >
-            <Calendar className="h-5 w-5" />
-            <span className="text-[10px] font-medium">Events</span>
-          </button>
+
+          {user ? (
+            <ProfileMenu
+              user={user}
+              profile={profile}
+              navigate={navigate}
+              signOut={signOut}
+              likesCount={likesCount}
+              connectionsCount={connectionsCount}
+              side="top"
+            >
+              <button
+                className={`flex flex-col items-center justify-center gap-1 p-2 rounded-xl transition-colors ${location.pathname === '/setup' ? 'text-primary' : 'text-muted-foreground'}`}
+              >
+                <div className="h-6 w-6 rounded-full overflow-hidden border border-border">
+                  {profile?.profile_image_url ? (
+                    <img src={profile.profile_image_url} alt="Profile" className="h-full w-full object-cover" />
+                  ) : (
+                    <User className="h-4 w-4 m-auto" />
+                  )}
+                </div>
+                <span className="text-[10px] font-medium">Profile</span>
+              </button>
+            </ProfileMenu>
+          ) : (
+            <button
+              className={`flex flex-col items-center justify-center gap-1 p-2 rounded-xl transition-colors ${location.pathname === '/setup' ? 'text-primary' : 'text-muted-foreground'}`}
+              onClick={() => navigate('/auth')}
+            >
+              <div className="h-6 w-6 rounded-full overflow-hidden border border-border">
+                <User className="h-4 w-4 m-auto" />
+              </div>
+              <span className="text-[10px] font-medium">Profile</span>
+            </button>
+          )}
         </div>
       </div>
     </motion.nav>
