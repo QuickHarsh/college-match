@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
 import { Wallet as WalletIcon, Coins, History, CreditCard } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 import TiltedCard from '@/reactbits/TiltedCard';
 import StarBorder from '@/reactbits/StarBorder';
 import ShinyText from '@/reactbits/ShinyText';
@@ -76,7 +77,10 @@ export default function Wallet() {
     if (!loading && !user) navigate('/auth');
   }, [user, loading, navigate]);
 
-  const buyWithRazorpay = async (amountCoins: number) => {
+  /* Custom amount state */
+  const [customAmount, setCustomAmount] = useState<number | ''>(10);
+
+  const buyWithRazorpay = async (amountCoins: number, priceINR?: number) => {
     if (!user) return;
     if (!keyId) {
       toast({ title: 'Payment key missing', description: 'Set VITE_RAZORPAY_KEY_ID to enable payments.', variant: 'destructive' });
@@ -87,7 +91,11 @@ export default function Wallet() {
       toast({ title: 'Payment unavailable', description: 'Could not load Razorpay SDK', variant: 'destructive' });
       return;
     }
-    const amountPaise = amountCoins * 100; // 1 coin = ₹1 (example). Adjust pricing as needed.
+
+    // Use provided price or default to 1 Coin = ₹1
+    const finalPriceINR = priceINR || amountCoins;
+    const amountPaise = finalPriceINR * 100;
+
     const options: any = {
       key: keyId,
       amount: amountPaise,
@@ -96,8 +104,9 @@ export default function Wallet() {
       description: `${amountCoins} coins`,
       handler: async (response: any) => {
         try {
-          // In production, verify on server then credit. Here we credit directly for demo.
-          await (supabase as any).rpc('credit_coins', { p_user_id: user.id, p_amount: amountCoins, p_desc: `RZP ${response.razorpay_payment_id}` });
+          // In production, verify on server then credit.
+          // Note: The RPC might need to know the price paid for auditing, but here we just credit coins.
+          await (supabase as any).rpc('credit_coins', { p_user_id: user.id, p_amount: amountCoins, p_desc: `RZP ${response.razorpay_payment_id} (₹${finalPriceINR})` });
           toast({ title: 'Payment successful', description: `Credited ${amountCoins} coins.` });
           reload();
         } catch (e) {
@@ -116,9 +125,9 @@ export default function Wallet() {
   };
 
   const packages = [
-    { coins: 50, label: 'Starter', priceINR: 50, color: 'from-blue-500 to-cyan-500' },
-    { coins: 120, label: 'Value', priceINR: 100, color: 'from-purple-500 to-pink-500' },
-    { coins: 300, label: 'Pro', priceINR: 240, color: 'from-amber-500 to-orange-500' },
+    { coins: 60, label: 'Starter Deal', priceINR: 50, color: 'from-blue-500 to-cyan-500' },
+    { coins: 120, label: 'Value Pack', priceINR: 100, color: 'from-purple-500 to-pink-500' },
+    { coins: 300, label: 'Pro Bundle', priceINR: 240, color: 'from-amber-500 to-orange-500' },
   ];
 
   return (
@@ -142,8 +151,8 @@ export default function Wallet() {
           </div>
         </div>
 
-        <section>
-          <div className="flex items-center gap-2 mb-6">
+        <section className="space-y-6">
+          <div className="flex items-center gap-2">
             <CreditCard className="h-5 w-5 text-primary" />
             <h2 className="text-xl font-bold">Top Up Coins</h2>
           </div>
@@ -172,11 +181,16 @@ export default function Wallet() {
                     <div className="absolute inset-0 flex flex-col justify-between p-6 bg-gradient-to-br from-black/60 to-black/30 text-white h-full">
                       <div>
                         <h3 className="text-2xl font-bold mb-1">{p.label}</h3>
-                        <p className="text-white/80 text-sm">Get {p.coins} coins instantly</p>
+                        <p className="text-white/80 text-sm">Get {p.coins} coins</p>
+                        {p.coins > p.priceINR && (
+                          <span className="inline-block mt-2 px-2 py-1 bg-green-500 text-xs font-bold rounded-full">
+                            {(100 * (p.coins - p.priceINR) / p.coins).toFixed(0)}% Extra
+                          </span>
+                        )}
                       </div>
                       <div className="text-center">
                         <div className="text-3xl font-bold mb-4">₹{p.priceINR}</div>
-                        <StarBorder as="button" className="w-full cursor-pointer" color="white" speed="4s" onClick={() => buyWithRazorpay(p.coins)}>
+                        <StarBorder as="button" className="w-full cursor-pointer" color="white" speed="4s" onClick={() => buyWithRazorpay(p.coins, p.priceINR)}>
                           <span className="font-bold text-sm">Buy Now</span>
                         </StarBorder>
                       </div>
@@ -186,8 +200,42 @@ export default function Wallet() {
               </motion.div>
             ))}
           </div>
+
+          {/* Custom Amount Section */}
+          <Card className="border-muted/50 shadow-sm bg-gradient-to-br from-background to-muted/20">
+            <CardHeader>
+              <CardTitle className="text-lg">Buy Custom Amount</CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col sm:flex-row items-end gap-4">
+              <div className="w-full sm:max-w-xs space-y-2">
+                <label className="text-sm font-medium text-muted-foreground">Coins (Min 10)</label>
+                <div className="relative">
+                  <Coins className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    type="number"
+                    min={10}
+                    placeholder="Enter amount"
+                    value={customAmount}
+                    onChange={(e) => setCustomAmount(e.target.value === '' ? '' : parseInt(e.target.value))}
+                    className="pl-9"
+                  />
+                </div>
+              </div>
+              <div className="w-full sm:w-auto">
+                <Button
+                  size="lg"
+                  className="w-full"
+                  disabled={!customAmount || Number(customAmount) < 10}
+                  onClick={() => buyWithRazorpay(Number(customAmount))}
+                >
+                  Pay ₹{Number(customAmount) || 0}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
           {!keyId && (
-            <div className="text-center text-xs text-muted-foreground mt-6">Note: Set VITE_RAZORPAY_KEY_ID to enable the Buy flow.</div>
+            <div className="text-center text-xs text-muted-foreground mt-2">Note: Set VITE_RAZORPAY_KEY_ID to enable the Buy flow.</div>
           )}
         </section>
 
