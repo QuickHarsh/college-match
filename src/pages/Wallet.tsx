@@ -122,7 +122,7 @@ export default function Wallet() {
   ];
 
   return (
-    <div className="min-h-screen bg-background pt-20 p-4 md:p-8">
+    <div className="min-h-screen bg-background pt-24 px-4 pb-4 md:px-8 md:pb-8">
       <div className="container mx-auto max-w-5xl space-y-8">
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
           <div>

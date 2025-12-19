@@ -29,6 +29,7 @@ import About from "./pages/About";
 import CallInviteListener from "./components/CallInviteListener";
 import Wallet from "./pages/Wallet";
 import Leaderboard from "./pages/Leaderboard";
+import Footer from "./components/Footer";
 
 const queryClient = new QueryClient();
 
@@ -67,6 +68,7 @@ const App = () => (
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
+          <Footer />
         </BrowserRouter>
       </TooltipProvider>
     </AuthProvider>
