@@ -7,6 +7,9 @@ import { motion } from 'framer-motion';
 import { Trophy, Medal, Crown, Sparkles, Loader2, Search } from 'lucide-react';
 import ShinyText from '@/reactbits/ShinyText';
 import SpotlightCard from '@/reactbits/SpotlightCard';
+import ProfileDetailsDialog from '@/components/ProfileDetailsDialog';
+import { type Candidate } from '@/lib/matching';
+import { toast } from 'sonner';
 
 interface LeaderboardUser {
     user_id: string;
@@ -22,6 +25,36 @@ export default function Leaderboard() {
     const navigate = useNavigate();
     const [users, setUsers] = useState<LeaderboardUser[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+
+    const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
+    const [showProfile, setShowProfile] = useState(false);
+
+    const handleUserClick = async (userId: string) => {
+        try {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const sb: any = supabase;
+            const { data, error } = await sb
+                .from('profiles')
+                .select('*')
+                .eq('user_id', userId)
+                .single();
+
+            if (error) throw error;
+            if (data) {
+                // Ensure array fields
+                const candidate: Candidate = {
+                    ...data,
+                    interests: data.interests || [],
+                    image_url: data.profile_image_url  // Map for compatibility if needed
+                };
+                setSelectedCandidate(candidate);
+                setShowProfile(true);
+            }
+        } catch (error) {
+            console.error(error);
+            toast.error("Could not load profile");
+        }
+    };
 
     useEffect(() => {
         if (!loading && !user) navigate('/auth');
@@ -144,7 +177,10 @@ export default function Leaderboard() {
                                     className="order-2 md:order-1 flex flex-col items-center"
                                 >
                                     <div className="relative mb-4">
-                                        <div className="w-20 h-20 rounded-full border-4 border-gray-300 overflow-hidden shadow-xl">
+                                        <div
+                                            className="w-20 h-20 rounded-full border-4 border-gray-300 overflow-hidden shadow-xl cursor-pointer hover:scale-105 transition-transform"
+                                            onClick={() => handleUserClick(top3[1].user_id)}
+                                        >
                                             <img src={top3[1].profile_image_url || `https://api.dicebear.com/7.x/initials/svg?seed=${top3[1].full_name}`} className="w-full h-full object-cover" alt={top3[1].full_name} />
                                         </div>
                                         <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-gray-300 text-gray-800 text-xs font-bold px-2 py-0.5 rounded-full flex items-center gap-1 shadow-sm">
@@ -169,7 +205,10 @@ export default function Leaderboard() {
                                 >
                                     <div className="relative mb-4">
                                         <Crown className="w-8 h-8 text-yellow-500 fill-yellow-500 absolute -top-10 left-1/2 -translate-x-1/2 animate-bounce" />
-                                        <div className="w-28 h-28 rounded-full border-4 border-yellow-500 overflow-hidden shadow-2xl shadow-yellow-500/20">
+                                        <div
+                                            className="w-28 h-28 rounded-full border-4 border-yellow-500 overflow-hidden shadow-2xl shadow-yellow-500/20 cursor-pointer hover:scale-105 transition-transform"
+                                            onClick={() => handleUserClick(top3[0].user_id)}
+                                        >
                                             <img src={top3[0].profile_image_url || `https://api.dicebear.com/7.x/initials/svg?seed=${top3[0].full_name}`} className="w-full h-full object-cover" alt={top3[0].full_name} />
                                         </div>
                                         <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-yellow-500 text-white text-sm font-bold px-3 py-0.5 rounded-full flex items-center gap-1 shadow-md">
@@ -194,7 +233,10 @@ export default function Leaderboard() {
                                     className="order-3 flex flex-col items-center"
                                 >
                                     <div className="relative mb-4">
-                                        <div className="w-20 h-20 rounded-full border-4 border-amber-700 overflow-hidden shadow-xl">
+                                        <div
+                                            className="w-20 h-20 rounded-full border-4 border-amber-700 overflow-hidden shadow-xl cursor-pointer hover:scale-105 transition-transform"
+                                            onClick={() => handleUserClick(top3[2].user_id)}
+                                        >
                                             <img src={top3[2].profile_image_url || `https://api.dicebear.com/7.x/initials/svg?seed=${top3[2].full_name}`} className="w-full h-full object-cover" alt={top3[2].full_name} />
                                         </div>
                                         <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-amber-700 text-white text-xs font-bold px-2 py-0.5 rounded-full flex items-center gap-1 shadow-sm">
@@ -220,13 +262,13 @@ export default function Leaderboard() {
                                     transition={{ delay: i * 0.05 + 0.4 }}
                                 >
                                     <SpotlightCard className="bg-card/40 backdrop-blur-sm border-white/5 hover:bg-card/60 transition-colors" spotlightColor="rgba(255, 255, 255, 0.05)">
-                                        <div className="p-4 flex items-center gap-4">
+                                        <div className="p-4 flex items-center gap-4 cursor-pointer" onClick={() => handleUserClick(user.user_id)}>
                                             <div className="font-bold text-muted-foreground w-8 text-center">#{user.rank}</div>
                                             <div className="w-12 h-12 rounded-full bg-muted overflow-hidden flex-shrink-0">
                                                 <img src={user.profile_image_url || `https://api.dicebear.com/7.x/initials/svg?seed=${user.full_name}`} className="w-full h-full object-cover" alt={user.full_name} />
                                             </div>
                                             <div className="flex-1 min-w-0">
-                                                <div className="font-bold truncate">{user.full_name}</div>
+                                                <div className="font-bold truncate hover:underline">{user.full_name}</div>
                                                 <div className="text-xs text-muted-foreground truncate">{user.college_name || 'Student'}</div>
                                             </div>
                                             <div className="text-right">
@@ -241,6 +283,12 @@ export default function Leaderboard() {
                     </>
                 )}
             </div>
-        </div>
+
+            <ProfileDetailsDialog
+                isOpen={showProfile}
+                onOpenChange={setShowProfile}
+                candidate={selectedCandidate}
+            />
+        </div >
     );
 }

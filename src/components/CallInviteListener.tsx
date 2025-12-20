@@ -12,15 +12,26 @@ export default function CallInviteListener() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!user) return;
-    const channel = supabase.channel(`notify-${user.id}`, { config: { broadcast: { self: false } } });
+    if (!user) {
+      console.log("CallInviteListener: No user logged in");
+      return;
+    }
+    const channelName = `notify-${user.id}`;
+    console.log("CallInviteListener: Subscribing to", channelName);
+
+    const channel = supabase.channel(channelName, { config: { broadcast: { self: false } } });
     let mounted = true;
-    channel.on('broadcast', { event: 'call_invite' }, (payload) => {
+
+    channel.on('broadcast', { event: 'call_invite' }, (evt) => {
+      console.log("CallInviteListener: Received call_invite event", evt);
       if (!mounted) return;
-      const roomId = (payload as any)?.payload?.roomId as string | undefined;
+
+      const payload = evt.payload;
+      const roomId = payload?.roomId;
+      const callerId = payload?.callerId;
+
       if (!roomId) return;
 
-      // Show Accept/Reject Toast
       toast.custom((t) => (
         <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 shadow-xl w-full max-w-md">
           <div className="flex items-center gap-4">
@@ -35,14 +46,42 @@ export default function CallInviteListener() {
             </div>
             <div className="flex-1">
               <h3 className="font-semibold text-lg">Incoming Video Call</h3>
-              <p className="text-sm text-muted-foreground">A match wants to connect!</p>
+              <p className="text-sm text-muted-foreground">{payload?.callerName ? `${payload.callerName} is calling...` : "A match wants to connect!"}</p>
             </div>
           </div>
           <div className="flex gap-2 mt-4">
             <Button
               variant="destructive"
               className="flex-1"
-              onClick={() => toast.dismiss(t)}
+              onClick={async () => {
+                toast.dismiss(t);
+                console.log("Reject clicked. CallerID available:", callerId);
+
+                if (callerId) {
+                  const channelName = `notify-${callerId}`;
+                  console.log("Sending call_rejected to:", channelName);
+
+                  const c = supabase.channel(channelName);
+                  c.subscribe((status) => {
+                    console.log(`Transient channel ${channelName} status:`, status);
+                    if (status === 'SUBSCRIBED') {
+                      c.send({
+                        type: 'broadcast',
+                        event: 'call_rejected',
+                        payload: { rejecterId: user.id }
+                      }).then(res => console.log("Sent rejection:", res));
+
+                      // Cleanup transient channel after sending
+                      setTimeout(() => {
+                        console.log("Cleaning up transient channel");
+                        supabase.removeChannel(c);
+                      }, 1000);
+                    }
+                  });
+                } else {
+                  console.error("Cannot reject: No callerId found in payload");
+                }
+              }}
             >
               <PhoneOff className="w-4 h-4 mr-2" />
               Reject
@@ -59,7 +98,22 @@ export default function CallInviteListener() {
             </Button>
           </div>
         </div>
-      ), { duration: 30000 }); // Ring for 30s
+      ), { duration: 30000 });
+    });
+
+    // Handle Call Rejection (For the Caller)
+    channel.on('broadcast', { event: 'call_rejected' }, (evt) => {
+      console.log("CallInviteListener: Received call_rejected event!", evt);
+
+      toast.error("Call Rejected", { description: "User is busy or declined the call." });
+
+      // Check if currently on the video call page (as a caller waiting)
+      if (window.location.pathname.includes('/match/video')) {
+        console.log("Navigating back to /match");
+        navigate('/match'); // Or wherever appropriate
+      } else {
+        console.log("Not on video page, just showing toast");
+      }
     });
     channel.subscribe((status) => {
       if (status !== 'SUBSCRIBED') return;

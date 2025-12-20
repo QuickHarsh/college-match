@@ -1,44 +1,60 @@
 import { useMeeting } from "@videosdk.live/react-sdk";
-import { useMemo, useState } from "react";
+import { useMemo, useEffect, useState, useRef } from "react";
 import { ParticipantView } from "./ParticipantView";
 import { Controls } from "./Controls";
-import { Copy, Check } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { AlertCircle } from "lucide-react";
 
 export function MeetingView({ meetingId, onMeetingLeave }: { meetingId: string, onMeetingLeave: () => void }) {
-    const [copied, setCopied] = useState(false);
-    const { participants, leave } = useMeeting({
+    const [joined, setJoined] = useState<string | null>(null);
+    const [error, setError] = useState<string | null>(null);
+    const hasJoined = useRef(false);
+
+    const { join, participants } = useMeeting({
+        onMeetingJoined: () => {
+            setJoined("JOINED");
+            setError(null);
+        },
         onMeetingLeft: () => {
             onMeetingLeave();
         },
+        onError: (error) => {
+            console.error("Meeting Error", error);
+            setError(error.message);
+        }
     });
 
     const participantIds = useMemo(() => {
         return [...participants.keys()];
     }, [participants]);
 
-    const copyMeetingId = () => {
-        navigator.clipboard.writeText(meetingId);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-    };
+    useEffect(() => {
+        if (!hasJoined.current) {
+            hasJoined.current = true;
+            join();
+        }
+    }, [join]);
 
-    return (
-        <div className="flex flex-col h-screen bg-gray-950 p-4 pt-20">
-            {/* Header Info */}
-            <div className="flex justify-between items-center mb-4 px-2">
-                <div className="flex items-center gap-2">
-                    <span className="text-white/60 text-sm">Meeting ID:</span>
-                    <code className="text-indigo-400 bg-indigo-950/30 px-2 py-1 rounded text-sm font-mono">{meetingId}</code>
-                    <Button variant="ghost" size="icon" className="h-6 w-6 text-white/60 hover:text-white" onClick={copyMeetingId}>
-                        {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-                    </Button>
-                </div>
-                <div className="text-white/60 text-sm">
-                    {participantIds.length} {participantIds.length === 1 ? 'Participant' : 'Participants'}
+    if (error) {
+        return (
+            <div className="flex h-screen items-center justify-center bg-gray-950 p-4">
+                <div className="bg-red-500/10 border border-red-500/20 p-6 rounded-2xl max-w-md text-center space-y-4">
+                    <AlertCircle className="w-12 h-12 text-red-500 mx-auto" />
+                    <h3 className="text-xl font-bold text-white">Connection Failed</h3>
+                    <p className="text-red-200">{error}</p>
+                    <button
+                        onClick={onMeetingLeave}
+                        className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-full font-medium transition-colors"
+                    >
+                        Go Back
+                    </button>
                 </div>
             </div>
+        );
+    }
 
+
+    return (
+        <div className="flex flex-col h-screen bg-gray-950 p-4">
             {/* Video Grid */}
             <div className={`flex-1 grid gap-4 ${participantIds.length <= 1 ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2'}`}>
                 {participantIds.map((participantId) => (
@@ -53,13 +69,14 @@ export function MeetingView({ meetingId, onMeetingLeave }: { meetingId: string, 
                         <div className="bg-black/40 backdrop-blur-md p-6 rounded-2xl text-center space-y-2 max-w-sm pointer-events-auto">
                             <div className="text-2xl">👀</div>
                             <h3 className="text-white font-bold text-xl">Waiting for others...</h3>
-                            <p className="text-white/60 text-sm">Share the meeting ID or wait for your match to join.</p>
+                            <p className="text-white/60 text-sm">You are in the call.</p>
                         </div>
                     </div>
                 )}
             </div>
 
-            <Controls />
+            <Controls onLeave={onMeetingLeave} />
         </div>
     );
 }
+

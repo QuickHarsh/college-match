@@ -8,6 +8,9 @@ import { ArrowLeft, Send, Video, Phone, MoreVertical, Loader2, MessageCircle } f
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { usePresence } from '@/hooks/usePresence';
+import { createMeeting } from '@/lib/videosdk';
+import ProfileDetailsDialog from '@/components/ProfileDetailsDialog';
+import { type Candidate } from '@/lib/matching';
 
 interface ChatMessage {
     id: string;
@@ -37,6 +40,35 @@ export default function ChatRoom() {
     const isOnline = otherUser ? isUserOnline(otherUser.user_id) : false;
 
     const scrollRef = useRef<HTMLDivElement>(null);
+
+    const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
+    const [showProfile, setShowProfile] = useState(false);
+
+    const handleUserClick = async (userId: string) => {
+        try {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const sb: any = supabase;
+            const { data, error } = await sb
+                .from('profiles')
+                .select('*')
+                .eq('user_id', userId)
+                .single();
+
+            if (error) throw error;
+            if (data) {
+                const candidate: Candidate = {
+                    ...data,
+                    interests: data.interests || [],
+                    image_url: data.profile_image_url
+                };
+                setSelectedCandidate(candidate);
+                setShowProfile(true);
+            }
+        } catch (error) {
+            console.error(error);
+            toast.error("Could not load profile");
+        }
+    };
 
     // Auth Check
     useEffect(() => {
@@ -278,6 +310,16 @@ export default function ChatRoom() {
         const sb: any = supabase;
 
         try {
+            const token = import.meta.env.VITE_VIDEOSDK_TOKEN;
+            if (!token) {
+                toast.error("VideoSDK Token missing");
+                return;
+            }
+
+            // Generate VideoSDK Meeting ID
+            const videoRoomId = await createMeeting(token);
+            if (!videoRoomId) throw new Error("Failed to create meeting ID");
+
             // Find other user ID again to be safe
             const { data: m } = await sb
                 .from('matches')
@@ -288,7 +330,7 @@ export default function ChatRoom() {
             if (!m) return;
             const otherId = m.user1_id === user.id ? m.user2_id : m.user1_id;
 
-            // Send Signal
+            // Send Signal with NEW videoRoomId
             const channel = supabase.channel(`notify-${otherId}`);
             channel.subscribe((status) => {
                 if (status === 'SUBSCRIBED') {
@@ -296,14 +338,14 @@ export default function ChatRoom() {
                         type: 'broadcast',
                         event: 'call_invite',
                         payload: {
-                            roomId,
+                            roomId: videoRoomId,
                             callerId: user.id,
                             callerName: user.user_metadata.full_name
                         }
                     });
 
                     toast.success('Starting video call...');
-                    navigate(`/match/video?room=${roomId}`);
+                    navigate(`/match/video?room=${videoRoomId}`);
                 }
             });
 
@@ -324,8 +366,8 @@ export default function ChatRoom() {
 
                     {otherUser ? (
                         <div className="flex items-center gap-3">
-                            <div className="relative">
-                                <div className="w-10 h-10 rounded-full overflow-hidden border border-gray-200 dark:border-gray-700">
+                            <div className="relative cursor-pointer" onClick={() => handleUserClick(otherUser.user_id)}>
+                                <div className="w-10 h-10 rounded-full overflow-hidden border border-gray-200 dark:border-gray-700 hover:opacity-80 transition-opacity">
                                     <img
                                         src={otherUser.profile_image_url || `https://api.dicebear.com/7.x/initials/svg?seed=${otherUser.full_name}`}
                                         alt={otherUser.full_name}
@@ -432,6 +474,13 @@ export default function ChatRoom() {
                     </Button>
                 </form>
             </div>
-        </div>
+
+
+            <ProfileDetailsDialog
+                isOpen={showProfile}
+                onOpenChange={setShowProfile}
+                candidate={selectedCandidate}
+            />
+        </div >
     );
 }

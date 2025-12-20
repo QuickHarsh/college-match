@@ -24,7 +24,6 @@ export default function Matching() {
   const nopeOpacity = useTransform(x, [-150, -50], [1, 0]);
   const scale = useTransform(x, [-200, 0, 200], [0.95, 1, 0.95]);
 
-  const [matchCelebration, setMatchCelebration] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
 
   useEffect(() => {
@@ -62,9 +61,8 @@ export default function Matching() {
     try {
       const res = await likeUser(user.id, current.user_id);
       if (res.isMutual) {
-        setMatchCelebration(true);
-        toast.success('It’s a match!', { description: 'You can now video call or keep swiping.' });
-        // Removed auto-navigation
+        toast.success('It’s a match!', { description: 'Start a chat from the Messages tab!' });
+        handleSkip();
       } else {
         toast.success('Like sent', { description: 'We’ll notify you if it’s a match.' });
         handleSkip();
@@ -75,65 +73,7 @@ export default function Matching() {
     }
   };
 
-  const startCall = async () => {
-    if (!user || !current) return;
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const sb: any = supabase;
-      // 1. Get the match ID (assuming it was just created)
-      const { data: m, error: mErr } = await sb
-        .from('matches')
-        .select('id')
-        .or(`user1_id.eq.${user.id},user2_id.eq.${user.id}`)
-        .or(`user1_id.eq.${current.user_id},user2_id.eq.${current.user_id}`)
-        .eq('is_mutual', true)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single();
 
-      if (mErr || !m) throw new Error('Could not find match');
-
-      // 2. Get or Create Room
-      let roomId;
-      const { data: room, error: rErr } = await sb
-        .from('chat_rooms')
-        .select('id')
-        .eq('match_id', m.id)
-        .maybeSingle();
-
-      if (room) {
-        roomId = room.id;
-      } else {
-        const { data: newRoom, error: nrErr } = await sb
-          .from('chat_rooms')
-          .insert({ match_id: m.id })
-          .select('id')
-          .single();
-        if (nrErr) throw nrErr;
-        roomId = newRoom.id;
-      }
-
-      // 3. Send Invite Signal
-      const channel = sb.channel(`notify-${current.user_id}`);
-      channel.subscribe((status) => {
-        if (status === 'SUBSCRIBED') {
-          channel.send({
-            type: 'broadcast',
-            event: 'call_invite',
-            payload: { roomId, callerId: user.id, callerName: user.user_metadata.full_name }
-          });
-
-          // 4. Navigate
-          toast.success('Calling...', { description: 'Waiting for them to join.' });
-          navigate(`/match/video?room=${roomId}`);
-        }
-      });
-
-    } catch (e) {
-      console.error(e);
-      toast.error('Failed to start call');
-    }
-  };
 
   // Calculate a simulated match score based on shared interests or random for demo
   const getMatchScore = (candidate: Candidate) => {
@@ -285,94 +225,9 @@ export default function Matching() {
         </AnimatePresence>
       </div>
 
-      {/* Controls */}
-      <div className="mt-8 flex items-center gap-6">
-        <motion.button
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
-          onClick={handleSkip}
-          className="w-14 h-14 rounded-full bg-white dark:bg-gray-800 shadow-lg flex items-center justify-center text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors border border-gray-200 dark:border-gray-700"
-        >
-          <X className="w-6 h-6" strokeWidth={3} />
-        </motion.button>
 
-        <motion.button
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
-          onClick={() => setShowProfile(true)}
-          className="w-10 h-10 rounded-full bg-white dark:bg-gray-800 shadow-md flex items-center justify-center text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors border border-gray-200 dark:border-gray-700"
-        >
-          <Info className="w-5 h-5" />
-        </motion.button>
 
-        <motion.button
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
-          onClick={handleLike}
-          className="w-14 h-14 rounded-full bg-gradient-to-tr from-pink-500 to-purple-600 shadow-lg shadow-pink-500/30 flex items-center justify-center text-white hover:shadow-xl hover:shadow-pink-500/50 transition-all"
-        >
-          <Heart className="w-6 h-6 fill-current" />
-        </motion.button>
-      </div>
 
-      {/* Match Celebration Overlay */}
-      <AnimatePresence>
-        {matchCelebration && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/90 backdrop-blur-sm p-4"
-          >
-            <motion.div
-              initial={{ scale: 0.5, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ type: "spring", bounce: 0.5 }}
-              className="text-center space-y-8"
-            >
-              <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-pink-500 to-purple-600 blur-3xl opacity-50" />
-                <h1 className="relative text-6xl md:text-8xl font-black text-white italic tracking-tighter transform -rotate-6">
-                  IT'S A<br />MATCH!
-                </h1>
-              </div>
-
-              <div className="flex items-center justify-center gap-4">
-                <div className="w-24 h-24 rounded-full border-4 border-white overflow-hidden">
-                  <img src={user?.user_metadata?.avatar_url || "https://github.com/shadcn.png"} className="w-full h-full object-cover" />
-                </div>
-                <div className="w-12 h-12 flex items-center justify-center bg-white rounded-full text-pink-500">
-                  <Heart className="w-6 h-6 fill-current" />
-                </div>
-                <div className="w-24 h-24 rounded-full border-4 border-white overflow-hidden">
-                  <img src={current?.profile_image_url || "https://github.com/shadcn.png"} className="w-full h-full object-cover" />
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <Button
-                  size="lg"
-                  className="w-full max-w-xs rounded-full bg-white text-pink-600 hover:bg-gray-100 font-bold text-lg h-12"
-                  onClick={startCall}
-                >
-                  <Zap className="w-4 h-4 mr-2 fill-current" />
-                  Start Video Call
-                </Button>
-                <Button
-                  variant="ghost"
-                  className="w-full max-w-xs rounded-full text-white hover:bg-white/10"
-                  onClick={() => {
-                    setMatchCelebration(false);
-                    handleSkip(); // Move to next candidate
-                  }}
-                >
-                  Keep Swiping
-                </Button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       <ProfileDetailsDialog
         isOpen={showProfile}

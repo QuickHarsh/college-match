@@ -6,6 +6,9 @@ import { motion } from 'framer-motion';
 import { MessageCircle, Search, ArrowRight, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { usePresence } from '@/hooks/usePresence';
+import ProfileDetailsDialog from '@/components/ProfileDetailsDialog';
+import { type Candidate } from '@/lib/matching';
+import { toast } from 'sonner';
 
 interface MatchProfile {
     match_id: string;
@@ -23,6 +26,36 @@ export default function Chats() {
     const [isLoadingMatches, setIsLoadingMatches] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const { isUserOnline } = usePresence();
+
+    const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
+    const [showProfile, setShowProfile] = useState(false);
+
+    const handleUserClick = async (userId: string, e?: React.MouseEvent) => {
+        if (e) e.stopPropagation();
+        try {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const sb: any = supabase;
+            const { data, error } = await sb
+                .from('profiles')
+                .select('*')
+                .eq('user_id', userId)
+                .single();
+
+            if (error) throw error;
+            if (data) {
+                const candidate: Candidate = {
+                    ...data,
+                    interests: data.interests || [],
+                    image_url: data.profile_image_url
+                };
+                setSelectedCandidate(candidate);
+                setShowProfile(true);
+            }
+        } catch (error) {
+            console.error(error);
+            toast.error("Could not load profile");
+        }
+    };
 
     useEffect(() => {
         if (!loading && !user) navigate('/auth');
@@ -194,8 +227,8 @@ export default function Chats() {
 
                                 <div className="relative flex items-center gap-4">
                                     {/* Avatar */}
-                                    <div className="relative">
-                                        <div className="w-14 h-14 rounded-full p-0.5 bg-gradient-to-tr from-pink-500 to-purple-600">
+                                    <div className="relative" onClick={(e) => handleUserClick(match.user_id, e)}>
+                                        <div className="w-14 h-14 rounded-full p-0.5 bg-gradient-to-tr from-pink-500 to-purple-600 hover:scale-110 transition-transform">
                                             <div className="w-full h-full rounded-full border-2 border-white dark:border-gray-900 overflow-hidden bg-gray-100 dark:bg-gray-800">
                                                 <img
                                                     src={match.profile_image_url || `https://api.dicebear.com/7.x/initials/svg?seed=${match.full_name}`}
@@ -247,6 +280,11 @@ export default function Chats() {
                     )}
                 </div>
             </div>
+            <ProfileDetailsDialog
+                isOpen={showProfile}
+                onOpenChange={setShowProfile}
+                candidate={selectedCandidate}
+            />
         </div>
     );
 }

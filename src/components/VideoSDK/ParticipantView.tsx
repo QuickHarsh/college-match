@@ -37,7 +37,10 @@ export function ParticipantView({ participantId }: { participantId: string }) {
         if (videoRef.current) {
             if (webcamOn && videoStream) {
                 videoRef.current.srcObject = videoStream;
-                videoRef.current.play().catch((error) => console.error("videoElem.current.play() failed", error));
+                videoRef.current.play().catch((error) => {
+                    if (error.name === "AbortError") return;
+                    console.error("videoElem.current.play() failed", error);
+                });
             } else {
                 videoRef.current.srcObject = null;
             }

@@ -2,8 +2,17 @@ import { useMeeting } from "@videosdk.live/react-sdk";
 import { Mic, MicOff, Video, VideoOff, PhoneOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-export function Controls() {
+interface ControlsProps {
+    onLeave: () => void;
+}
+
+export function Controls({ onLeave }: ControlsProps) {
     const { toggleMic, toggleWebcam, leave, localMicOn, localWebcamOn } = useMeeting();
+
+    const handleLeave = () => {
+        leave();
+        onLeave();
+    };
 
     return (
         <div className="fixed bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-4 bg-background/80 backdrop-blur-md p-4 rounded-full border shadow-xl z-50">
@@ -29,7 +38,7 @@ export function Controls() {
                 variant="destructive"
                 size="icon"
                 className="rounded-full w-14 h-14 bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-500/30"
-                onClick={() => leave()}
+                onClick={handleLeave}
             >
                 <PhoneOff className="h-6 w-6" />
             </Button>
