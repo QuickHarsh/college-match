@@ -19,6 +19,7 @@ import StarBorder from '@/reactbits/StarBorder';
 import MatchStack from '@/reactbits/MatchStack';
 import CircularGallery from '@/reactbits/CircularGallery';
 import { Card, CardContent } from '@/components/ui/card';
+import Footer from '@/components/Footer';
 
 const Index = () => {
   const { user, signOut, loading } = useAuth();
@@ -106,7 +107,7 @@ const Index = () => {
             {
               id: 'welcome',
               tag: 'Welcome',
-              title: 'Welcome to CollegeMatch',
+              title: 'Welcome to KeenQ',
               subtitle: 'Your campus community awaits. Explore events, clubs, and meet new people.',
               cta: 'Get Started',
               to: '/match',
@@ -123,7 +124,7 @@ const Index = () => {
           {
             id: 'welcome',
             tag: 'Welcome',
-            title: 'Welcome to CollegeMatch',
+            title: 'Welcome to KeenQ',
             subtitle: 'Your campus community awaits. Explore events, clubs, and meet new people.',
             cta: 'Get Started',
             to: '/match',
@@ -295,7 +296,7 @@ const Index = () => {
                   className="inline-block text-foreground mb-0"
                 />
                 <span className="text-4xl md:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-600 block mt-2">
-                  at CollegeMatch
+                  at KeenQ
                 </span>
               </h2>
             </motion.div>
@@ -636,6 +637,7 @@ const Index = () => {
           </div>
         </div>
       </main>
+      <Footer />
     </div>
   );
 };

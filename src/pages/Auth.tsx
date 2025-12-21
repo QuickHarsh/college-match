@@ -14,6 +14,7 @@ export default function Auth() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
+  const [gender, setGender] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
@@ -50,14 +51,14 @@ export default function Auth() {
           description: 'You have successfully signed in.',
         });
       } else {
-        if (!fullName.trim()) {
+        if (!fullName.trim() || !gender) {
           toast.error('Missing Information', {
-            description: 'Please enter your full name.',
+            description: 'Please enter your full name and select your gender.',
           });
           setLoading(false);
           return;
         }
-        await signUp(email, password, fullName);
+        await signUp(email, password, fullName, gender);
         toast.success('Account Created!', {
           description: 'Please check your email to verify your account.',
         });
@@ -148,7 +149,7 @@ export default function Auth() {
               animate={{ opacity: 1 }}
               transition={{ delay: 0.4 }}
             >
-              CollegeMatch
+              KeenQ
             </motion.h1>
             <motion.p
               className="text-gray-600 dark:text-gray-300 font-medium"
@@ -201,22 +202,42 @@ export default function Auth() {
                         animate={{ opacity: 1, height: 'auto' }}
                         exit={{ opacity: 0, height: 0 }}
                         transition={{ duration: 0.3 }}
-                        className="space-y-2"
+                        className="space-y-4"
                       >
-                        <Label htmlFor="fullName" className="text-sm font-medium text-gray-700 dark:text-gray-200">
-                          Full Name
-                        </Label>
-                        <div className="relative">
-                          <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                          <Input
-                            id="fullName"
-                            type="text"
-                            placeholder="John Doe"
-                            value={fullName}
-                            onChange={(e) => setFullName(e.target.value)}
-                            className="pl-10 h-11 bg-gray-50/50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-pink-500/20 transition-all duration-300"
+                        <div className="space-y-2">
+                          <Label htmlFor="fullName" className="text-sm font-medium text-gray-700 dark:text-gray-200">
+                            Full Name
+                          </Label>
+                          <div className="relative">
+                            <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                            <Input
+                              id="fullName"
+                              type="text"
+                              placeholder="John Doe"
+                              value={fullName}
+                              onChange={(e) => setFullName(e.target.value)}
+                              className="pl-10 h-11 bg-gray-50/50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-pink-500/20 transition-all duration-300"
+                              required
+                            />
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="signup-gender" className="text-sm font-medium text-gray-700 dark:text-gray-200">
+                            Gender
+                          </Label>
+                          <select
+                            id="signup-gender"
+                            value={gender}
+                            onChange={(e) => setGender(e.target.value)}
+                            className="w-full h-11 px-3 bg-gray-50/50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-md focus:ring-2 focus:ring-pink-500/20 focus:outline-none transition-all duration-300 text-sm"
                             required
-                          />
+                          >
+                            <option value="" disabled>Select your gender</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                            <option value="Non-binary">Non-binary</option>
+                            <option value="Other">Other</option>
+                          </select>
                         </div>
                       </motion.div>
                     )}

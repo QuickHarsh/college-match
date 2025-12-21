@@ -12,6 +12,7 @@ import TiltedCard from '@/reactbits/TiltedCard';
 import StarBorder from '@/reactbits/StarBorder';
 import ShinyText from '@/reactbits/ShinyText';
 import { motion } from 'framer-motion';
+import Footer from '@/components/Footer';
 
 declare global {
   interface Window {
@@ -100,7 +101,7 @@ export default function Wallet() {
       key: keyId,
       amount: amountPaise,
       currency: 'INR',
-      name: 'CollegeMatch',
+      name: 'KeenQ',
       description: `${amountCoins} coins`,
       handler: async (response: any) => {
         try {
@@ -272,6 +273,7 @@ export default function Wallet() {
           </CardContent>
         </Card>
       </div>
+      <Footer />
     </div>
   );
 }

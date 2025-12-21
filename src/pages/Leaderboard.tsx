@@ -147,7 +147,7 @@ export default function Leaderboard() {
                         <ShinyText text="Campus Leaderboard" disabled={false} speed={3} className="inline-block" />
                     </h1>
                     <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-                        Top students making the most connections on CollegeMatch.
+                        Top students making the most connections on KeenQ.
                         <br />
                         <span className="text-sm opacity-75">Updated in real-time based on mutual matches.</span>
                     </p>

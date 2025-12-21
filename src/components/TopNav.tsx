@@ -229,12 +229,12 @@ export default function TopNav() {
         <div className="flex items-center gap-3 cursor-pointer group" onClick={() => navigate('/')}>
           <div className="relative">
             <div className="absolute inset-0 bg-gradient-to-tr from-pink-500 to-purple-600 rounded-lg blur opacity-75 group-hover:opacity-100 transition-opacity duration-300" />
-            <div className="relative h-9 w-9 bg-gradient-to-br from-pink-500 to-purple-600 rounded-lg flex items-center justify-center text-white shadow-lg transform group-hover:rotate-12 transition-transform duration-300">
+            {/* <div className="relative h-9 w-9 bg-gradient-to-br from-pink-500 to-purple-600 rounded-lg flex items-center justify-center text-white shadow-lg transform group-hover:rotate-12 transition-transform duration-300">
               <Sparkles className="h-5 w-5" />
-            </div>
+            </div> */}
           </div>
-          <span className="font-bold text-xl bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent hidden sm:block">
-            CollegeMatch
+          <span className="font-bold text-3xl bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent hidden sm:block">
+            KeenQ
           </span>
         </div>
 

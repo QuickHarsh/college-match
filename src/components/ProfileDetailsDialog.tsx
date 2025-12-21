@@ -65,6 +65,28 @@ export default function ProfileDetailsDialog({ isOpen, onOpenChange, candidate, 
                         </p>
                     </div>
 
+                    {/* Basic Info & Lifestyle Grid */}
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-3">
+                            <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">Basics</h4>
+                            <div className="space-y-2 text-sm">
+                                {candidate.gender && <div className="flex justify-between"><span>Gender</span><span className="font-medium">{candidate.gender}</span></div>}
+                                {candidate.looking_for && <div className="flex justify-between"><span>Looking For</span><span className="font-medium text-primary">{candidate.looking_for}</span></div>}
+                                {candidate.height && <div className="flex justify-between"><span>Height</span><span className="font-medium">{candidate.height}</span></div>}
+                                {candidate.zodiac && <div className="flex justify-between"><span>Zodiac</span><span className="font-medium">{candidate.zodiac}</span></div>}
+                                {candidate.religion && <div className="flex justify-between"><span>Religion</span><span className="font-medium">{candidate.religion}</span></div>}
+                            </div>
+                        </div>
+                        <div className="space-y-3">
+                            <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">Lifestyle</h4>
+                            <div className="space-y-2 text-sm">
+                                {candidate.drinking && <div className="flex justify-between"><span>Drinking</span><span className="font-medium">{candidate.drinking}</span></div>}
+                                {candidate.smoking && <div className="flex justify-between"><span>Smoking</span><span className="font-medium">{candidate.smoking}</span></div>}
+                                {candidate.fitness && <div className="flex justify-between"><span>Fitness</span><span className="font-medium">{candidate.fitness}</span></div>}
+                            </div>
+                        </div>
+                    </div>
+
                     <div>
                         <h3 className="text-lg font-semibold mb-3">Interests</h3>
                         <div className="flex flex-wrap gap-2">

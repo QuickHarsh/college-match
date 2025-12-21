@@ -5,7 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import { MessageCircle, Video, Search, Sparkles, Loader2 } from 'lucide-react';
+import { MessageCircle, Video, Search, Sparkles, Loader2, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Input } from '@/components/ui/input';
 import { usePresence } from '@/hooks/usePresence';
@@ -135,6 +135,22 @@ export default function Connections() {
     }
   };
 
+  const handleUnfriend = async (matchId: string, userName: string) => {
+    if (!confirm(`Are you sure you want to remove ${userName}? This action cannot be undone.`)) return;
+
+    try {
+      const sb: any = supabase;
+      const { error } = await sb.from('matches').delete().eq('id', matchId);
+      if (error) throw error;
+
+      setItems(prev => prev.filter(i => i.match_id !== matchId));
+      toast.success(`Removed ${userName} from connections`);
+    } catch (e) {
+      console.error(e);
+      toast.error('Failed to remove connection');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-cyan-50 dark:from-gray-950 dark:via-black dark:to-gray-900 pt-20 pb-20">
       <div className="max-w-6xl mx-auto p-6 space-y-8">
@@ -242,6 +258,15 @@ export default function Connections() {
                         onClick={() => startCall(it.match_id, it.user_id)}
                       >
                         <Video className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="rounded-full text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+                        title="Unfriend"
+                        onClick={() => handleUnfriend(it.match_id, it.full_name)}
+                      >
+                        <Trash2 className="w-4 h-4" />
                       </Button>
                     </div>
                   </div>

@@ -24,10 +24,10 @@ export default function About() {
           className="text-center max-w-3xl mx-auto mb-16"
         >
           <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight mb-6">
-            <ShinyText text="About CollegeMatch" disabled={false} speed={3} className="inline-block" />
+            <ShinyText text="About KeenQ" disabled={false} speed={3} className="inline-block" />
           </h1>
           <p className="text-xl text-muted-foreground leading-relaxed">
-            CollegeMatch helps students connect through shared interests, clubs, and events.
+            KeenQ helps students connect through shared interests, clubs, and events.
             Find meaningful matches, chat in real-time, and build your campus community.
           </p>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
@@ -52,7 +52,7 @@ export default function About() {
                   <h3 className="text-2xl font-bold">What it is</h3>
                 </div>
                 <p className="text-muted-foreground text-lg leading-relaxed">
-                  CollegeMatch is a campus-focused social and matching platform. Take a compatibility quiz,
+                  KeenQ is a campus-focused social and matching platform. Take a compatibility quiz,
                   join clubs, attend events, and connect with like-minded peers. Chats, calls, and invites are built-in.
                 </p>
               </div>
@@ -108,7 +108,7 @@ function CoFoundersCarousel() {
       name: 'Shikhar Singh',
       title: 'Co-founder',
       praise:
-        'Driving vision, product thinking, and community impact to make CollegeMatch truly resonate with students.',
+        'Driving vision, product thinking, and community impact to make KeenQ truly resonate with students.',
       img: 'shikhar.jpeg',
       durationMs: 3500, // Shorter display for Shikhar
     },

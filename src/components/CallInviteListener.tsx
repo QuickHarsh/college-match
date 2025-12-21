@@ -22,7 +22,7 @@ export default function CallInviteListener() {
     const channel = supabase.channel(channelName, { config: { broadcast: { self: false } } });
     let mounted = true;
 
-    channel.on('broadcast', { event: 'call_invite' }, (evt) => {
+    channel.on('broadcast', { event: 'call_invite' }, async (evt) => {
       console.log("CallInviteListener: Received call_invite event", evt);
       if (!mounted) return;
 
@@ -32,7 +32,24 @@ export default function CallInviteListener() {
 
       if (!roomId) return;
 
+      // Verify if the caller is actually a match (Security Check to prevent spam)
+      // Check if they are actually matched
+      const sb: any = supabase as any;
+      const { data: isValidMatch } = await sb
+        .from('matches')
+        .select('id')
+        .or(`and(user1_id.eq.${user.id},user2_id.eq.${callerId}),and(user1_id.eq.${callerId},user2_id.eq.${user.id})`)
+        .eq('is_mutual', true)
+        .maybeSingle();
+
+      if (!isValidMatch) {
+        console.warn("CallInviteListener: Rejected call from non-match", callerId);
+        return;
+      }
+
       toast.custom((t) => (
+        // ... (rest of the toast)
+
         <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 shadow-xl w-full max-w-md">
           <div className="flex items-center gap-4">
             <div className="relative">

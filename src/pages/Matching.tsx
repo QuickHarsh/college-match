@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
-import { Sparkles, Users, Heart, X, GraduationCap, MapPin, Info, Zap } from 'lucide-react';
+import { Sparkles, Users, Heart, X, GraduationCap, MapPin, Info, Zap, Copy } from 'lucide-react';
 import { fetchCandidates, likeUser, type Candidate } from '@/lib/matching';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -102,14 +102,28 @@ export default function Matching() {
               animate={{ opacity: 1, scale: 1 }}
               className="absolute inset-0 flex flex-col items-center justify-center text-center p-8 bg-white dark:bg-gray-900 rounded-3xl shadow-xl border border-gray-100 dark:border-gray-800"
             >
-              <div className="w-20 h-20 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-6">
-                <Users className="h-10 w-10 text-gray-400" />
+              <div className="w-20 h-20 bg-pink-100 dark:bg-pink-900/20 rounded-full flex items-center justify-center mx-auto mb-6">
+                <Sparkles className="h-10 w-10 text-pink-500" />
               </div>
-              <h3 className="text-xl font-semibold mb-2">No more profiles</h3>
-              <p className="text-muted-foreground mb-6">Check back later for new matches or explore events!</p>
-              <Button onClick={() => load()} variant="outline" className="rounded-full">
-                Refresh Suggestions
-              </Button>
+              <h3 className="text-2xl font-bold mb-2">Ran out of profiles?</h3>
+              <p className="text-muted-foreground mb-8 text-lg">
+                Invite your friends to KeenQ and expand your circle!
+              </p>
+
+              <div className="flex flex-col gap-3 w-full max-w-xs">
+                <Button
+                  onClick={() => {
+                    navigator.clipboard.writeText(window.location.origin);
+                    toast.success('Link copied!', { description: 'Share it with your friends.' });
+                  }}
+                  className="rounded-full bg-gradient-to-r from-pink-600 to-purple-600 w-full py-6 text-lg"
+                >
+                  <Copy className="mr-2 h-5 w-5" /> Copy Invite Link
+                </Button>
+                <Button onClick={() => load()} variant="ghost" className="rounded-full">
+                  Refresh Suggestions
+                </Button>
+              </div>
             </motion.div>
           )}
 

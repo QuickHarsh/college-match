@@ -45,14 +45,23 @@ export default function ProfileSetup() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [profile, setProfile] = useState({
-    full_name: '',
+    full_name: user?.user_metadata?.full_name || '',
     college_name: '',
     branch: '',
     year_of_study: '',
     age: '',
     bio: '',
     interests: [] as string[],
-    profile_image_url: ''
+    profile_image_url: '',
+    gender: user?.user_metadata?.gender || '',
+    preferred_gender: 'Everyone',
+    looking_for: '',
+    height: '',
+    zodiac: '',
+    religion: '',
+    drinking: '',
+    smoking: '',
+    fitness: ''
   });
   const [connectionsCount, setConnectionsCount] = useState<number>(0);
   const [gallery, setGallery] = useState<GalleryImage[]>([]);
@@ -145,18 +154,30 @@ export default function ProfileSetup() {
       .from('profiles')
       .select('*')
       .eq('user_id', user.id)
+      .eq('user_id', user.id)
       .single();
 
-    if (data && !error) {
+    const profileData = data as any;
+
+    if (profileData && !error) {
       setProfile({
-        full_name: data.full_name || '',
-        college_name: data.college_name || '',
-        branch: data.branch || '',
-        year_of_study: data.year_of_study?.toString() || '',
-        age: data.age?.toString() || '',
-        bio: data.bio || '',
-        interests: (data.interests as string[]) || [],
-        profile_image_url: data.profile_image_url || ''
+        full_name: profileData.full_name || '',
+        college_name: profileData.college_name || '',
+        branch: profileData.branch || '',
+        year_of_study: profileData.year_of_study?.toString() || '',
+        age: profileData.age?.toString() || '',
+        bio: profileData.bio || '',
+        interests: (profileData.interests as string[]) || [],
+        profile_image_url: profileData.profile_image_url || '',
+        gender: profileData.gender || '',
+        preferred_gender: profileData.preferred_gender || 'Everyone',
+        looking_for: profileData.looking_for || '',
+        height: profileData.height || '',
+        zodiac: profileData.zodiac || '',
+        religion: profileData.religion || '',
+        drinking: profileData.drinking || '',
+        smoking: profileData.smoking || '',
+        fitness: profileData.fitness || ''
       });
     }
   }, [user]);
@@ -216,6 +237,15 @@ export default function ProfileSetup() {
           bio: profile.bio,
           interests: profile.interests,
           profile_image_url: profile.profile_image_url || null,
+          gender: profile.gender,
+          preferred_gender: profile.preferred_gender,
+          looking_for: profile.looking_for,
+          height: profile.height,
+          zodiac: profile.zodiac,
+          religion: profile.religion,
+          drinking: profile.drinking,
+          smoking: profile.smoking,
+          fitness: profile.fitness,
           is_verified: true // Auto-verify for now
         }, { onConflict: 'user_id' });
 
@@ -257,7 +287,7 @@ export default function ProfileSetup() {
               <ShinyText text="Complete Your Profile" disabled={false} speed={3} className="inline-block" />
             </h1>
             <p className="text-muted-foreground text-lg">
-              Let's set up your profile to find your perfect college match!
+              Let's set up your profile to find your perfect KeenQ match!
             </p>
             <div className="mt-3 flex items-center justify-center gap-4 text-sm">
               <div className="px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 backdrop-blur-sm">Connections: <span className="font-bold text-primary">{connectionsCount}</span></div>
@@ -318,6 +348,144 @@ export default function ProfileSetup() {
                       required
                       className="bg-background/50 border-muted-foreground/20 focus:border-primary h-11"
                     />
+                  </div>
+                </div>
+
+                {/* Personal Details */}
+                <div className="space-y-6 pt-4">
+                  <div className="flex items-center gap-2 text-lg font-semibold text-primary">
+                    <User className="h-5 w-5" />
+                    Personal Details
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label htmlFor="gender">Gender</Label>
+                      <Select value={profile.gender} onValueChange={(value) => setProfile(prev => ({ ...prev, gender: value }))}>
+                        <SelectTrigger className="bg-background/50 border-muted-foreground/20 focus:border-primary h-11">
+                          <SelectValue placeholder="Select Gender" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Male">Male</SelectItem>
+                          <SelectItem value="Female">Female</SelectItem>
+                          <SelectItem value="Non-binary">Non-binary</SelectItem>
+                          <SelectItem value="Other">Other</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="preferred_gender">Interested In</Label>
+                      <Select value={profile.preferred_gender} onValueChange={(value) => setProfile(prev => ({ ...prev, preferred_gender: value }))}>
+                        <SelectTrigger className="bg-background/50 border-muted-foreground/20 focus:border-primary h-11">
+                          <SelectValue placeholder="Everyone" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Male">Men</SelectItem>
+                          <SelectItem value="Female">Women</SelectItem>
+                          <SelectItem value="Everyone">Everyone</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="looking_for">Looking For</Label>
+                      <Select value={profile.looking_for} onValueChange={(value) => setProfile(prev => ({ ...prev, looking_for: value }))}>
+                        <SelectTrigger className="bg-background/50 border-muted-foreground/20 focus:border-primary h-11">
+                          <SelectValue placeholder="Select intent" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Relationship">Relationship</SelectItem>
+                          <SelectItem value="Friends">Friends</SelectItem>
+                          <SelectItem value="Casual">Casual</SelectItem>
+                          <SelectItem value="Study Buddy">Study Buddy</SelectItem>
+                          <SelectItem value="Networking">Networking</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="height">Height</Label>
+                      <Input
+                        id="height"
+                        value={profile.height}
+                        onChange={(e) => setProfile(prev => ({ ...prev, height: e.target.value }))}
+                        placeholder="e.g. 5'10"
+                        className="bg-background/50 border-muted-foreground/20 focus:border-primary h-11"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="zodiac">Zodiac Sign</Label>
+                      <Select value={profile.zodiac} onValueChange={(value) => setProfile(prev => ({ ...prev, zodiac: value }))}>
+                        <SelectTrigger className="bg-background/50 border-muted-foreground/20 focus:border-primary h-11">
+                          <SelectValue placeholder="Select Sign" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo', 'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces'].map(z => (
+                            <SelectItem key={z} value={z}>{z}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="religion">Religion</Label>
+                      <Input
+                        id="religion"
+                        value={profile.religion}
+                        onChange={(e) => setProfile(prev => ({ ...prev, religion: e.target.value }))}
+                        placeholder="Optional"
+                        className="bg-background/50 border-muted-foreground/20 focus:border-primary h-11"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Lifestyle Section */}
+                  <div className="space-y-2 pt-2">
+                    <Label className="text-base font-semibold">Lifestyle Habits</Label>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="drinking" className="text-xs text-muted-foreground">Drinking</Label>
+                        <Select value={profile.drinking} onValueChange={(value) => setProfile(prev => ({ ...prev, drinking: value }))}>
+                          <SelectTrigger className="bg-background/50 border-muted-foreground/20 h-9">
+                            <SelectValue placeholder="Select" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Never">Never</SelectItem>
+                            <SelectItem value="Socially">Socially</SelectItem>
+                            <SelectItem value="Frequently">Frequently</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="smoking" className="text-xs text-muted-foreground">Smoking</Label>
+                        <Select value={profile.smoking} onValueChange={(value) => setProfile(prev => ({ ...prev, smoking: value }))}>
+                          <SelectTrigger className="bg-background/50 border-muted-foreground/20 h-9">
+                            <SelectValue placeholder="Select" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Never">Never</SelectItem>
+                            <SelectItem value="Socially">Socially</SelectItem>
+                            <SelectItem value="Frequently">Frequently</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="fitness" className="text-xs text-muted-foreground">Fitness</Label>
+                        <Select value={profile.fitness} onValueChange={(value) => setProfile(prev => ({ ...prev, fitness: value }))}>
+                          <SelectTrigger className="bg-background/50 border-muted-foreground/20 h-9">
+                            <SelectValue placeholder="Select" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Never">Never</SelectItem>
+                            <SelectItem value="Sometimes">Sometimes</SelectItem>
+                            <SelectItem value="Active">Active</SelectItem>
+                            <SelectItem value="Gym Rat">Gym Rat</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
                   </div>
                 </div>
 

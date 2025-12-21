@@ -12,16 +12,60 @@ export type Candidate = {
   interests: string[] | null;
   profile_image_url: string | null;
   is_verified?: boolean;
+  gender?: string;
+  looking_for?: string;
+  height?: string;
+  zodiac?: string;
+  religion?: string;
+  drinking?: string;
+  smoking?: string;
+  fitness?: string;
 };
 
 export async function fetchCandidates(currentUserId: string, limit = 20): Promise<Candidate[]> {
-  // Fetch verified profiles other than me
-  const { data, error } = await supabase
+  const sb: any = supabase;
+
+  // 1. Get existing matches (mutual) to exclude them
+  const { data: existingMatches } = await sb
+    .from('matches')
+    .select('user1_id, user2_id')
+    .or(`user1_id.eq.${currentUserId},user2_id.eq.${currentUserId}`)
+    .eq('is_mutual', true);
+
+  const excludedIds = [currentUserId];
+  if (existingMatches) {
+    existingMatches.forEach((m: any) => {
+      if (m.user1_id !== currentUserId) excludedIds.push(m.user1_id);
+      if (m.user2_id !== currentUserId) excludedIds.push(m.user2_id);
+    });
+  }
+
+  // 2. Fetch verified profiles NOT in the excluded list
+  // Note: .not('user_id', 'in', `(${...})`) requires a parenthesis-wrapped comma-separated string for the value
+  const notInString = `(${excludedIds.join(',')})`;
+
+  // 2. Fetch current user to get their preferences
+  const { data: me } = await sb
     .from('profiles')
-    .select('user_id, full_name, college_name, branch, year_of_study, age, bio, interests, profile_image_url, is_verified')
-    .neq('user_id', currentUserId)
-    .eq('is_verified', true)
-    .limit(limit);
+    .select('preferred_gender')
+    .eq('user_id', currentUserId)
+    .single();
+
+  const pref = me?.preferred_gender;
+
+  // 3. Build query
+  let query = sb
+    .from('profiles')
+    .select('user_id, full_name, college_name, branch, year_of_study, age, bio, interests, profile_image_url, is_verified, gender, looking_for, height, zodiac, religion, drinking, smoking, fitness')
+    .not('user_id', 'in', notInString)
+    .eq('is_verified', true);
+
+  // Apply Gender Filter
+  if (pref && pref !== 'Everyone') {
+    query = query.eq('gender', pref);
+  }
+
+  const { data, error } = await query.limit(limit);
 
   if (error) throw error;
   return (data || []) as unknown as Candidate[];
@@ -53,32 +97,8 @@ export async function likeUser(likerId: string, likedId: string) {
     .eq('is_mutual', true)
     .maybeSingle();
 
-  // If mutual, try to find chat_room and notify the other user to join video call
-  if (match && match.is_mutual) {
-    const otherUserId = match.user1_id === likerId ? match.user2_id : match.user1_id;
-    const { data: room } = await sb
-      .from('chat_rooms')
-      .select('id')
-      .eq('match_id', match.id)
-      .maybeSingle();
-
-    if (room?.id) {
-      try {
-        const channel = (sb).channel?.(`notify-${otherUserId}`, { config: { broadcast: { self: false } } });
-        if (channel) {
-          await channel.subscribe(async (status: string) => {
-            if (status === 'SUBSCRIBED') {
-              channel.send({ type: 'broadcast', event: 'call_invite', payload: { roomId: room.id, fromUserId: likerId } });
-              // small delay then remove channel to avoid leaks
-              setTimeout(() => { (sb).removeChannel?.(channel); }, 500);
-            }
-          });
-        }
-      } catch {
-        // best effort
-      }
-    }
-  }
+  // Code removed: Automatic video call invite on match was causing issues.
+  // if (match && match.is_mutual) { ... }
 
   return { isMutual: !!match };
 }

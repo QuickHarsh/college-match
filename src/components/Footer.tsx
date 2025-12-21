@@ -6,7 +6,7 @@ const Footer = () => {
         <footer className="w-full py-6 px-4 mt-auto border-t bg-background/50 backdrop-blur-sm text-sm text-muted-foreground">
             <div className="container mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
                 <div className="text-center md:text-left">
-                    <p>© {new Date().getFullYear()} CollegeMatch. All rights reserved.</p>
+                    <p>© {new Date().getFullYear()} KeenQ. All rights reserved.</p>
                 </div>
 
                 <div className="flex flex-wrap items-center justify-center gap-6">
